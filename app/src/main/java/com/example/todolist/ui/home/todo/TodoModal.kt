@@ -1,0 +1,709 @@
+package com.example.todolist.ui.todo
+
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.todolist.ui.CommonSwitch
+import com.example.todolist.ui.CommonTitleField
+import java.time.LocalDateTime
+import java.time.ZoneId
+import kotlinx.coroutines.launch
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TodoModal(
+    viewModel: TodoModalViewModel = hiltViewModel(),
+    onDismiss: () -> Unit
+) {
+    val isEditMode by viewModel.isEditMode.collectAsStateWithLifecycle()
+    val date by viewModel.date.collectAsStateWithLifecycle()
+    val startTime by viewModel.startTime.collectAsStateWithLifecycle()
+    val endTime by viewModel.endTime.collectAsStateWithLifecycle()
+    val reminderOffsets by viewModel.reminderOffsets.collectAsStateWithLifecycle()
+    val title by viewModel.title.collectAsStateWithLifecycle()
+    val detail by viewModel.detail.collectAsStateWithLifecycle()
+    val isDone by viewModel.isDone.collectAsStateWithLifecycle()
+    val isHighPriority by viewModel.isHighPriority.collectAsStateWithLifecycle()
+    val isFocusEnabled by viewModel.isFocusEnabled.collectAsStateWithLifecycle()
+    val isValid by viewModel.isValid.collectAsStateWithLifecycle()
+    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+    val isReminderEnabled by viewModel.isReminderEnabled.collectAsStateWithLifecycle()
+
+    var localTitle by remember { mutableStateOf(title) }
+    var localDetail by remember { mutableStateOf(detail) }
+    val scope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp, bottom = 4.dp)
+    ) {
+        // Tiêu đề căn giữa
+        Text(
+            text = "TO DO",
+            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.align(Alignment.Center)
+        )
+        // Nút Đóng (Start)
+        IconButton(
+            onClick = onDismiss,
+            modifier = Modifier.align(Alignment.CenterStart)
+        ) {
+            Icon(Icons.Default.Close, null)
+        }
+        // Nút Lưu (End)
+        IconButton(
+            enabled = isValid,
+            onClick = {
+                viewModel.saveTodo()
+                scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() }
+            },
+            modifier = Modifier.align(Alignment.CenterEnd)
+        ) {
+            Icon(
+                Icons.Default.Check, null,
+                tint = if (isValid) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.outline
+            )
+        }
+    }
+    val scrollState = rememberScrollState()
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .verticalScroll(scrollState)
+            .padding(horizontal = 8.dp)
+    ) {
+        // Tiêu đề và chi tiết
+        TextFieldsCard(title, detail, viewModel::updateTitle, viewModel::updateDetail)
+
+        // Thời gian thực hiện
+        DateTimeSection(
+            date       = date,
+            startTime  = startTime,
+            endTime    = endTime,
+            viewModel  = viewModel
+        )
+
+
+        // Reminder Offsets
+        ReminderSettingsBlock(
+            isEnabled = isReminderEnabled,
+            onEnabledChange = { viewModel.toggleReminderEnabled()},
+            reminderOffsets = reminderOffsets,
+            onOffsetsChange = { viewModel.updateReminderOffsets(it) }
+        )
+
+        // Checkbox
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = "Ưu tiên",
+                    tint = Color(0xFFFFC107),
+                    modifier = Modifier.padding(end = 4.dp)
+                )
+                CommonTitleField("Ưu tiên", Modifier.padding(end = 8.dp))
+//                Text(
+//                    "Ưu tiên",
+//                    modifier = Modifier.padding(end = 8.dp)
+//                )
+//                Switch(
+//                    checked = isHighPriority,
+//                    onCheckedChange = { viewModel.toggleIsHighPriority() },
+//                    colors = SwitchDefaults.colors(
+//                        checkedThumbColor = Color(0xFF4CAF50),
+//                        checkedTrackColor = Color(0xFFB2FF59),
+//                        uncheckedThumbColor = Color.LightGray,
+//                        uncheckedTrackColor = Color(0xFFE0E0E0)
+//                    )
+//                )
+                CommonSwitch(isCheck = isHighPriority, onCheckedChange = {viewModel.toggleIsHighPriority()})
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Favorite,
+                    contentDescription = "Tập trung",
+                    tint = Color(0xFF2196F3),
+                    modifier = Modifier.padding(end = 4.dp)
+                )
+                CommonTitleField("Tập trung", Modifier.padding(end = 8.dp))
+//                Text(
+//                    "Tập trung",
+//                    modifier = Modifier.padding(end = 8.dp)
+//                )
+//                Switch(
+//                    checked = isFocusEnabled,
+//                    onCheckedChange = { viewModel.toggleIsFocusEnabled() },
+//                    modifier = Modifier.scale(0.8f),
+//                    colors = SwitchDefaults.colors(
+//                        checkedThumbColor = Color.White,
+//                        checkedTrackColor = Color(0xFF4CAF50),
+//                        uncheckedTrackColor = Color.LightGray
+//                    )
+//                )
+                CommonSwitch(isCheck = isFocusEnabled, onCheckedChange = {viewModel.toggleIsFocusEnabled()})
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TextFieldsCard(title: String, detail: String, onTitle: (String) -> Unit, onDetail: (String) -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 6.dp),
+        shape  = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F9F9))
+    ) {
+
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 12.dp)
+            ) {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = onTitle,
+                    placeholder = { Text("Tiêu đề", style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Bold)) },
+                    singleLine = true,
+                    textStyle     = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedBorderColor = Color.Transparent,
+                        containerColor = Color.Transparent
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = detail,
+                    onValueChange =  onDetail,
+                    placeholder = { Text("Thêm chi tiết") },
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedBorderColor = Color.Transparent,
+                        containerColor = Color.Transparent
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+
+                )
+            }
+
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DateTimeSection(
+    date: LocalDateTime,
+    startTime: LocalDateTime,
+    endTime: LocalDateTime,
+    viewModel: TodoModalViewModel
+) {
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showStartTimePicker by remember { mutableStateOf(false) }
+    var showEndTimePicker by remember { mutableStateOf(false) }
+
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis =
+        date.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    )
+    val startTimePickerState = rememberTimePickerState(
+        initialHour = startTime.hour,
+        initialMinute = startTime.minute
+    )
+    val endTimePickerState = rememberTimePickerState(
+        initialHour = endTime.hour,
+        initialMinute = endTime.minute
+    )
+
+    val timeFormatter = DateTimeFormatter.ofPattern("hh:mm a", Locale.US)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp)
+            .border(1.dp, Color.Black, RoundedCornerShape(12.dp))
+            .padding(12.dp)
+    ) {
+        Column {
+
+            // Tiêu đề lớn
+//            Text(
+//                text = "Thời gian thực hiện",
+//                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+//                fontSize = 18.sp
+//            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.DateRange,
+                    contentDescription = "Thời gian thực hiện",
+                    tint = Color(0xFF2196F3),
+                    modifier = Modifier.padding(end = 4.dp)
+                )
+                CommonTitleField("Thời gian thực hiện", Modifier)
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            // Ngày bắt đầu
+            Text(
+                text = "Ngày bắt đầu",
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 16.sp)
+            )
+            TextButton(
+                onClick = { showDatePicker = true },
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                Text(date.toLocalDate().toString(), fontSize = 16.sp)
+            }
+
+            Spacer(Modifier.height(4.dp))
+
+            // Hàng chứa giờ bắt đầu - kết thúc
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text("Giờ bắt đầu", style = MaterialTheme.typography.bodySmall)
+                    TextButton(
+                        onClick = { showStartTimePicker = true },
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text(
+                            startTime.format(timeFormatter),
+                            fontSize = 16.sp
+                        )
+                    }
+                }
+
+                Column {
+                    Text("Giờ kết thúc", style = MaterialTheme.typography.bodySmall)
+                    TextButton(
+                        onClick = { showEndTimePicker = true },
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text(
+                            endTime.format(timeFormatter),
+                            fontSize = 16.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // Dialogs
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        viewModel.updateDate(
+                            LocalDateTime.ofEpochSecond(
+                                millis / 1000, 0,
+                                ZoneId.systemDefault().rules.getOffset(LocalDateTime.now())
+                            )
+                        )
+                    }
+                    showDatePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Hủy") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    if (showStartTimePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showStartTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.updateStartTime(
+                        startTime.withHour(startTimePickerState.hour)
+                            .withMinute(startTimePickerState.minute)
+                    )
+                    showStartTimePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showStartTimePicker = false }) { Text("Hủy") }
+            }
+        ) {
+            TimePicker(state = startTimePickerState)
+        }
+    }
+
+    if (showEndTimePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showEndTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.updateEndTime(
+                        endTime.withHour(endTimePickerState.hour)
+                            .withMinute(endTimePickerState.minute)
+                    )
+                    showEndTimePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEndTimePicker = false }) { Text("Hủy") }
+            }
+        ) {
+            TimePicker(state = endTimePickerState)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ReminderPickerSheet(
+    selectedOffsets: List<Long>,
+    onDismiss: () -> Unit,
+    onConfirm: (List<Long>) -> Unit
+) {
+    val allOptions = listOf(
+        0L to "Đúng giờ",
+        5L to "5 phút trước",
+        10L to "10 phút trước",
+        30L to "30 phút trước"
+    )
+    val availableOptions = allOptions.filterNot { it.first in selectedOffsets }
+
+    var tempSelection by remember { mutableStateOf<Long?>(null) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = Color.White,
+        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+    ) {
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+            // Title Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text("Hủy bỏ")
+                }
+                Text(
+                    "Chọn nhắc nhở lúc",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                TextButton(onClick = {
+                    tempSelection?.let {
+                        onConfirm(selectedOffsets + it)
+                    }
+                    onDismiss()
+                }) {
+                    Text("Hoàn tất")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // List
+            availableOptions.forEach { (offset, label) ->
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { tempSelection = offset }
+                        .padding(vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = label)
+                    if (tempSelection == offset) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = Color(0xFF4CAF50)
+                        )
+                    }
+                }
+            }
+
+            if (availableOptions.isEmpty()) {
+                Text("Tất cả lựa chọn đã được chọn", modifier = Modifier.padding(top = 8.dp))
+            }
+        }
+    }
+}
+
+//@OptIn(ExperimentalMaterial3Api::class)
+//@Composable
+//fun ReminderSettingsBlock(
+//    isEnabled: Boolean,
+//    onEnabledChange: (Boolean) -> Unit,
+//    reminderOffsets: List<Long>,
+//    onOffsetsChange: (List<Long>) -> Unit
+//) {
+//    var showAddReminderSheet by remember { mutableStateOf(false) }
+//
+//    Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+//        // Tiêu đề + Switch
+//        Row(
+//            modifier = Modifier.fillMaxWidth(),
+//            horizontalArrangement = Arrangement.SpaceBetween,
+//            verticalAlignment = Alignment.CenterVertically
+//        ) {
+//            Row(verticalAlignment = Alignment.CenterVertically) {
+//                Icon(Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF4CAF50), modifier = Modifier.padding(end = 4.dp))
+//                CommonTitleField("Cài đặt nhắc nhở")
+////                Text("  Cài đặt nhắc nhở", fontWeight = FontWeight.SemiBold)
+//            }
+//            Switch(checked = isEnabled, onCheckedChange = {
+//                onEnabledChange(it)
+////                if (!it) onOffsetsChange(emptyList())
+//            },
+//                modifier = Modifier.scale(0.8f), // ✅ Switch nhỏ hơn
+//                colors = SwitchDefaults.colors(
+//                    checkedThumbColor = Color.White,
+//                    checkedTrackColor = Color(0xFF4CAF50), // ✅ Màu xanh
+//                    uncheckedTrackColor = Color.LightGray
+//                ))
+//        }
+//
+//        // Nếu bật
+//        if (isEnabled) {
+//            reminderOffsets.forEach { offset ->
+//                val label = when (offset) {
+//                    0L -> "Đúng giờ"
+//                    else -> "$offset phút trước"
+//                }
+//
+//                Row(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .padding(vertical = 6.dp),
+//                    horizontalArrangement = Arrangement.SpaceBetween,
+//                    verticalAlignment = Alignment.CenterVertically
+//                ) {
+//                    Row(verticalAlignment = Alignment.CenterVertically) {
+//                        Icon(Icons.Default.Phone, contentDescription = null, tint = Color(0xFF4CAF50))
+//                        Spacer(modifier = Modifier.width(6.dp))
+//                        Text(label)
+//                    }
+//                    IconButton(onClick = {
+//                        onOffsetsChange(reminderOffsets - offset)
+//                    }) {
+//                        Icon(Icons.Default.Close, contentDescription = "Xóa")
+//                    }
+//                }
+//            }
+//
+//            // Nút thêm nhắc nhở
+//            TextButton(
+//                onClick = { showAddReminderSheet = true },
+//                modifier = Modifier.padding(top = 4.dp)
+//            ) {
+//                Icon(Icons.Default.Add, contentDescription = null)
+//                Spacer(Modifier.width(4.dp))
+//                Text("Thêm nhắc nhở")
+//            }
+//        }
+//
+//        // Modal Bottom Sheet để chọn nhắc nhở
+//        if (showAddReminderSheet) {
+//            ReminderPickerSheet(
+//                selectedOffsets = reminderOffsets,
+//                onDismiss = { showAddReminderSheet = false },
+//                onConfirm = { newList ->
+//                    onOffsetsChange(newList)
+//                    showAddReminderSheet = false
+//                }
+//            )
+//        }
+//    }
+//}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ReminderSettingsBlock(
+    isEnabled: Boolean,
+    onEnabledChange: (Boolean) -> Unit,
+    reminderOffsets: List<Long>,
+    onOffsetsChange: (List<Long>) -> Unit
+) {
+    // =========== UI STATE ===========
+    var showAddReminderSheet by remember { mutableStateOf(false) }
+
+    // =========== HEADER ===========
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                Icons.Default.Notifications,
+                contentDescription = null,
+                tint = Color(0xFF4CAF50),
+                modifier = Modifier.padding(end = 4.dp)
+            )
+            Text("Cài đặt nhắc nhở", fontWeight = FontWeight.SemiBold)
+        }
+        Switch(
+            checked = isEnabled,
+            onCheckedChange = {
+                onEnabledChange(it)
+                if (it && 0L !in reminderOffsets) {            // ✅ tự thêm “Đúng giờ”
+                    onOffsetsChange(listOf(0L))
+                }
+            },
+            modifier = Modifier.scale(0.8f),
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = Color(0xFF4CAF50),
+                uncheckedTrackColor = Color.LightGray
+            )
+        )
+    }
+
+    // =========== LIST OF REMINDERS ===========
+    if (isEnabled) {
+
+        Column(Modifier.padding(start = 32.dp)) {       // thụt lề
+            reminderOffsets.sorted().forEach { offset ->
+                val label = if (offset == 0L) "Đúng giờ" else "$offset phút trước"
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.AccountCircle,
+                            contentDescription = null,
+                            tint = Color(0xFF4CAF50)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(label)
+                    }
+
+                    // ❌ KHÔNG hiển thị nút Xóa cho offset = 0
+                    if (offset != 0L) {
+                        IconButton(onClick = {
+                            onOffsetsChange(reminderOffsets - offset)
+                        }) {
+                            Icon(Icons.Default.Close, contentDescription = "Xóa")
+                        }
+                    }
+                }
+            }
+
+            // =========== BUTTON “+ Thêm nhắc nhở” ===========
+            TextButton(
+                onClick = { showAddReminderSheet = true },
+                modifier = Modifier.padding(top = 4.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Spacer(Modifier.width(4.dp))
+                Text("Thêm nhắc nhở")
+            }
+        }
+    }
+
+    // =========== MODAL SHEET ===========
+    if (showAddReminderSheet) {
+        ReminderPickerSheet(
+            selectedOffsets = reminderOffsets,          // đã gồm 0L
+            onDismiss      = { showAddReminderSheet = false },
+            onConfirm      = { newList ->
+                val updated = (newList + 0L).distinct() // ✅ đảm bảo vẫn có 0L
+                onOffsetsChange(updated)
+                showAddReminderSheet = false
+            }
+        )
+    }
+}
