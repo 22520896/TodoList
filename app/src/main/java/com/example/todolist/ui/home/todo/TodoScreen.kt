@@ -21,9 +21,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -37,20 +40,24 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.todolist.ui.todo.TodoModal
+import com.example.todolist.ui.todo.TodoModalViewModel
+import com.example.todolist.viewmodel.CommonViewModel
 import com.example.todolist.viewmodel.DateFilter
 //import com.example.todolist.viewmodel.TodoUiState
 import com.example.todolist.viewmodel.TodoViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 
 @Composable
 fun TodoScreen(
-    viewModel: TodoViewModel = hiltViewModel()
+    viewModel: TodoViewModel = hiltViewModel(),
+    commonViewModel: CommonViewModel = hiltViewModel()
 ) {
     val selectedFilter by viewModel.selectedFilter.collectAsStateWithLifecycle()
-    val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
-    val todos by viewModel.todos.collectAsStateWithLifecycle()
-
 
     Scaffold(
         topBar = {
@@ -66,16 +73,12 @@ fun TodoScreen(
                 .padding(paddingValues)
         ) {
             AnimatedVisibility(visible = selectedFilter == "Ngày") {
-                HorizontalCalendar(
-                        selectedDate = selectedDate,
-                        onDateSelected = { viewModel.setDate(it) },
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
+                DayTodoScreen(viewModel, commonViewModel)
             }
 
             AnimatedVisibility(visible = selectedFilter == "Tuần") {
                 Text(
-                    text = "Công việc ngày ${selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}",
+                    text = "Công việc ngày o}",
                     modifier = Modifier.padding(16.dp),
                     color = Color.Gray
                 )
@@ -83,28 +86,10 @@ fun TodoScreen(
 
             AnimatedVisibility(visible = selectedFilter == "Tháng") {
                 Text(
-                    text = "Công việc ngày ${selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}",
+                    text = "Công việc ngày 0",
                     modifier = Modifier.padding(16.dp),
                     color = Color.Gray
                 )
-            }
-
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(todos) { todo ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFFF8F8F8))
-                            .padding(10.dp)
-                    ) {
-                        Text(text = "• $todo", fontSize = 16.sp)
-                    }
-                }
             }
         }
     }
@@ -112,84 +97,70 @@ fun TodoScreen(
 
 
 
-//@Composable
-//fun DayTodoScreen() {
-//    var selectedDate by rememberSaveable { mutableStateOf(LocalDate.now()) }
-//
-//    Column(modifier = Modifier.fillMaxSize()) {
-//
-//        HorizontalCalendar(
-//            initialSelectedDate = selectedDate,
-//            onDateSelected = { date ->
-//                selectedDate = date
-//            },
-//            modifier = Modifier.padding(vertical = 8.dp)
-//        )
-//
-//        Text(
-//            text = "Công việc ngày ${selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}",
-//            modifier = Modifier.padding(16.dp),
-//        )
-//
-//        val fakeTodos = listOf(
-//            "Học Compose",
-//            "Gửi báo cáo cho sếp",
-//            "Tập thể dục",
-//            "Đi siêu thị"
-//        )
-//
-//        LazyColumn(
-//            modifier = Modifier.fillMaxSize(),
-//            contentPadding = PaddingValues(16.dp),
-//            verticalArrangement = Arrangement.spacedBy(12.dp)
-//        ) {
-//            items(fakeTodos.size) { todo ->
-//                Box(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .clip(RoundedCornerShape(10.dp))
-//                        .background(Color(0xFFF8F8F8))
-//                        .padding(12.dp)
-//                ) {
-//                    Text(text = "• ${fakeTodos[todo]}", fontSize = 16.sp)
-//                }
-//            }
-//        }
-//    }
-//}
-//
-//@Composable
-//fun DayTodoScreen(
-//    ui: TodoUiState,
-//    onDateSelected: (LocalDate) -> Unit
-//) {
-//    Column(Modifier.fillMaxSize()) {
-//
-//        HorizontalCalendar(
-//            selectedDate  = ui.selectedDate,
-//            onDateSelected = onDateSelected,
-//            modifier = Modifier.padding(vertical = 8.dp)
-//        )
-//
-//        Text(
-//            "Công việc ngày ${ui.selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}",
-//            Modifier.padding(16.dp)
-//        )
-//
-//        LazyColumn(
-//            Modifier.fillMaxSize(),
-//            contentPadding = PaddingValues(16.dp),
-//            verticalArrangement = Arrangement.spacedBy(12.dp)
-//        ) {
-//            items(ui.todosToday) { todo ->
-//                Surface(
-//                    shape = RoundedCornerShape(10.dp),
-//                    color = Color(0xFFF8F8F8),
-//                    modifier = Modifier.fillMaxWidth()
-//                ) {
-//                    Text("• $todo", fontSize = 16.sp, modifier = Modifier.padding(12.dp))
-//                }
-//            }
-//        }
-//    }
-//}
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DayTodoScreen(viewModel: TodoViewModel, commonViewModel: CommonViewModel) {
+    val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
+    val todos by viewModel.todos.collectAsStateWithLifecycle()
+    val totalTasks by viewModel.totalTasks.collectAsStateWithLifecycle()
+    val completedTasks by viewModel.completedTasks.collectAsStateWithLifecycle()
+    val todoModalViewModel: TodoModalViewModel = hiltViewModel()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+
+    var isModalVisible by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(selectedDate) {
+        viewModel.loadTodos()
+    }
+    Column(modifier = Modifier.fillMaxSize()) {
+        HorizontalCalendar(
+            selectedDate = selectedDate,
+            onDateSelected = { viewModel.setDate(it)
+                commonViewModel.updateInitDate(it)},
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        OverviewCard(
+            date = selectedDate.toString(),
+            todos = todos
+        )
+        LazyColumn {
+            items(todos) { todo ->
+                TodoItemCard(
+                    todo = todo,
+                    onCheckedChange = { checked ->
+                        viewModel.updateTodo(todo.copy(isDone = checked))
+                    },
+                    onClick = {
+                        todoModalViewModel.startEditTodo(todo)
+                        isModalVisible = true
+                        scope.launch { sheetState.show() }
+                    },
+                    onDeleteConfirmed = {
+                        viewModel.deleteTodo(todo.id)
+                    }
+                )
+            }
+        }
+        if (isModalVisible) {
+            ModalBottomSheet(
+                sheetState = sheetState,
+                onDismissRequest = {
+                    scope.launch { sheetState.hide() }.invokeOnCompletion {
+                        isModalVisible = false
+                    }
+                },
+                dragHandle = {}
+            ) {
+                TodoModal(
+                    viewModel = todoModalViewModel,
+                    onDismiss = {
+                        scope.launch { sheetState.hide() }.invokeOnCompletion {
+                            isModalVisible = false
+                        }
+                    }
+                )
+            }
+        }
+    }
+}

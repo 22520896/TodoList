@@ -29,7 +29,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.todolist.ui.home.todo.HorizontalCalendar
 import com.example.todolist.ui.home.todo.TodoScreen
 import com.example.todolist.ui.navbar.NavBar
@@ -40,9 +42,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.todolist.ui.home.note.NoteScreen
 import com.example.todolist.ui.navbar.NavDes
+import com.example.todolist.viewmodel.CommonViewModel
 
 @Composable
-fun HomeScreen(navController: NavController){
+fun HomeScreen(navController: NavController, commonViewModel: CommonViewModel = hiltViewModel()){
     val childNav = rememberNavController()
     Column {
         TopNavBar(navController = childNav)
@@ -51,7 +54,7 @@ fun HomeScreen(navController: NavController){
             startDestination = NavDes.TODO.route,
             modifier = Modifier.fillMaxSize()
         ) {
-            composable(NavDes.TODO.route) { TodoScreen() }
+            composable(NavDes.TODO.route) { TodoScreen(commonViewModel= commonViewModel) }
             composable(NavDes.NOTE.route) { NoteScreen() }
         }
     }
@@ -101,8 +104,11 @@ fun TopNavBar(navController: NavController) {
                             .height(33.dp)
                             .clickable {
                                 if (!selected) navController.navigate(item.route) {
-                                    popUpTo(navController.graph.startDestinationId)
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
                                     launchSingleTop = true
+                                    restoreState = true
                                 }
                             },
                         contentAlignment = Alignment.Center

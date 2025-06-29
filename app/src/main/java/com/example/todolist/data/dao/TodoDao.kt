@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.example.todolist.data.entity.Todo
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
 
 @Dao
 interface TodoDao {
@@ -29,15 +30,21 @@ interface TodoDao {
     suspend fun deleteAllTodos()
 
     // Lọc todo theo ngày (dựa trên trường date)
-    @Query("SELECT * FROM todos WHERE strftime('%Y-%m-%d', datetime(date / 1000, 'unixepoch', 'localtime')) = :dateStr ORDER BY startTime ASC")
-    fun getTodosByDate(dateStr: String): Flow<List<Todo>>
+//    @Query("SELECT * FROM todos WHERE strftime('%Y-%m-%d', datetime(date / 1000, 'unixepoch', 'localtime')) = :dateStr ORDER BY startTime ASC")
+//    fun getTodosByDate(dateStr: String): Flow<List<Todo>>
+    @Query("SELECT * FROM todos WHERE date = :date ORDER BY startTime ASC")
+    fun getTodosByDate(date: LocalDate): Flow<List<Todo>>
 
     // Lọc todo theo tháng (dựa trên trường date)
-    @Query("SELECT * FROM todos WHERE strftime('%Y-%m', datetime(date / 1000, 'unixepoch', 'localtime')) = :monthStr ORDER BY startTime ASC")
+//    @Query("SELECT * FROM todos WHERE strftime('%Y-%m', datetime(date / 1000, 'unixepoch', 'localtime')) = :monthStr ORDER BY startTime ASC")
+//    fun getTodosByMonth(monthStr: String): Flow<List<Todo>>
+    @Query("SELECT * FROM todos WHERE strftime('%Y-%m', date) = :monthStr ORDER BY startTime ASC")
     fun getTodosByMonth(monthStr: String): Flow<List<Todo>>
 
     // Lọc todo theo tuần (dựa trên trường date, tuần bắt đầu từ thứ Hai theo ISO)
-    @Query("SELECT * FROM todos WHERE strftime('%Y-%W', datetime(date / 1000, 'unixepoch', 'localtime')) = :weekStr ORDER BY startTime ASC")
+//    @Query("SELECT * FROM todos WHERE strftime('%Y-%W', datetime(date / 1000, 'unixepoch', 'localtime')) = :weekStr ORDER BY startTime ASC")
+//    fun getTodosByWeek(weekStr: String): Flow<List<Todo>>
+    @Query("SELECT * FROM todos WHERE strftime('%Y-%W', date) = :weekStr ORDER BY startTime ASC")
     fun getTodosByWeek(weekStr: String): Flow<List<Todo>>
 }
 

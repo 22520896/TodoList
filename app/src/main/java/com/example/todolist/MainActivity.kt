@@ -13,11 +13,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.todolist.ui.home.HomeScreen
 import com.example.todolist.ui.navbar.NavBar
 import com.example.todolist.ui.navbar.NavGraph
 import com.example.todolist.ui.theme.TodoListTheme
+import com.example.todolist.viewmodel.CommonViewModel
 import com.example.todolist.viewmodel.NavBarViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -29,9 +31,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             TodoListTheme {
                 val navController = rememberNavController()
-                NavBar(navController = navController) { innerPadding ->
+                val commonViewModel: CommonViewModel = hiltViewModel()
+                NavBar(navController = navController, commonViewModel = commonViewModel) { innerPadding ->
                     NavGraph(
                         navController = navController,
+                        commonViewModel = commonViewModel
                     ) }
             }
         }

@@ -2,10 +2,17 @@ package com.example.todolist.data
 // Định nghĩa các @TypeConverter, là các phương thức giúp Room ánh xạ các kiểu dữ liệu không được hỗ trợ trực tiếp (như LocalDateTime, List<Long>) sang các kiểu dữ liệu cơ bản mà SQLite hỗ trợ
 import androidx.room.TypeConverter
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 
 class Converters {
+    @TypeConverter
+    fun fromLocalDate(value: LocalDate?): String? = value?.toString()
+
+    @TypeConverter
+    fun toLocalDate(value: String?): LocalDate? = value?.let { LocalDate.parse(it) }
+
     @TypeConverter
     fun fromLocalDateTime(dateTime: LocalDateTime?): Long? =
         dateTime?.atZone(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()

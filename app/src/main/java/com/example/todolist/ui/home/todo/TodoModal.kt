@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -40,6 +41,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,9 +58,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.todolist.ui.CommonSwitch
 import com.example.todolist.ui.CommonTitleField
+import com.example.todolist.viewmodel.CommonViewModel
 import java.time.LocalDateTime
 import java.time.ZoneId
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -94,7 +99,7 @@ fun TodoModal(
     ) {
         // Tiêu đề căn giữa
         Text(
-            text = "TO DO",
+            text = "TODO",
             fontWeight = FontWeight.SemiBold,
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.align(Alignment.Center)
@@ -108,10 +113,13 @@ fun TodoModal(
         }
         // Nút Lưu (End)
         IconButton(
-            enabled = isValid,
             onClick = {
-                viewModel.saveTodo()
-                scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() }
+                scope.launch {
+                    if (viewModel.saveTodo()) {
+                        sheetState.hide()
+                        onDismiss()
+                    }
+                }
             },
             modifier = Modifier.align(Alignment.CenterEnd)
         ) {
@@ -212,6 +220,18 @@ fun TodoModal(
             }
         }
     }
+    if (errorMessage != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.clearError() },
+            confirmButton = {
+                TextButton(onClick = { viewModel.clearError() }) {
+                    Text("OK")
+                }
+            },
+            title = { Text("Lỗi") },
+            text = { Text(errorMessage!!) }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -274,7 +294,7 @@ fun TextFieldsCard(title: String, detail: String, onTitle: (String) -> Unit, onD
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateTimeSection(
-    date: LocalDateTime,
+    date: LocalDate,
     startTime: LocalDateTime,
     endTime: LocalDateTime,
     viewModel: TodoModalViewModel
@@ -284,9 +304,12 @@ fun DateTimeSection(
     var showEndTimePicker by remember { mutableStateOf(false) }
 
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis =
-        date.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        initialSelectedDateMillis = date
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
     )
+
     val startTimePickerState = rememberTimePickerState(
         initialHour = startTime.hour,
         initialMinute = startTime.minute
@@ -306,23 +329,15 @@ fun DateTimeSection(
             .padding(12.dp)
     ) {
         Column {
-
-            // Tiêu đề lớn
-//            Text(
-//                text = "Thời gian thực hiện",
-//                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-//                fontSize = 18.sp
-//            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            // Tiêu đề
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.DateRange,
                     contentDescription = "Thời gian thực hiện",
                     tint = Color(0xFF2196F3),
                     modifier = Modifier.padding(end = 4.dp)
                 )
-                CommonTitleField("Thời gian thực hiện", Modifier)
+                CommonTitleField("Thời gian thực hiện")
             }
 
             Spacer(Modifier.height(8.dp))
@@ -336,12 +351,12 @@ fun DateTimeSection(
                 onClick = { showDatePicker = true },
                 contentPadding = PaddingValues(0.dp)
             ) {
-                Text(date.toLocalDate().toString(), fontSize = 16.sp)
+                Text(date.toString(), fontSize = 16.sp)
             }
 
             Spacer(Modifier.height(4.dp))
 
-            // Hàng chứa giờ bắt đầu - kết thúc
+            // Giờ bắt đầu & kết thúc
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -352,10 +367,7 @@ fun DateTimeSection(
                         onClick = { showStartTimePicker = true },
                         contentPadding = PaddingValues(0.dp)
                     ) {
-                        Text(
-                            startTime.format(timeFormatter),
-                            fontSize = 16.sp
-                        )
+                        Text(startTime.format(timeFormatter), fontSize = 16.sp)
                     }
                 }
 
@@ -365,10 +377,7 @@ fun DateTimeSection(
                         onClick = { showEndTimePicker = true },
                         contentPadding = PaddingValues(0.dp)
                     ) {
-                        Text(
-                            endTime.format(timeFormatter),
-                            fontSize = 16.sp
-                        )
+                        Text(endTime.format(timeFormatter), fontSize = 16.sp)
                     }
                 }
             }
@@ -382,12 +391,10 @@ fun DateTimeSection(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        viewModel.updateDate(
-                            LocalDateTime.ofEpochSecond(
-                                millis / 1000, 0,
-                                ZoneId.systemDefault().rules.getOffset(LocalDateTime.now())
-                            )
-                        )
+                        val newDate = Instant.ofEpochMilli(millis)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate()
+                        viewModel.updateDate(newDate)
                     }
                     showDatePicker = false
                 }) { Text("OK") }
@@ -416,7 +423,14 @@ fun DateTimeSection(
                 TextButton(onClick = { showStartTimePicker = false }) { Text("Hủy") }
             }
         ) {
-            TimePicker(state = startTimePickerState)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                TimePicker(state = startTimePickerState)
+            }
         }
     }
 
@@ -436,11 +450,19 @@ fun DateTimeSection(
                 TextButton(onClick = { showEndTimePicker = false }) { Text("Hủy") }
             }
         ) {
-            TimePicker(state = endTimePickerState)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                TimePicker(state = endTimePickerState)
+            }
         }
     }
 }
 
+//Modal lựa chọn
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReminderPickerSheet(
@@ -449,10 +471,11 @@ fun ReminderPickerSheet(
     onConfirm: (List<Long>) -> Unit
 ) {
     val allOptions = listOf(
-        0L to "Đúng giờ",
-        5L to "5 phút trước",
-        10L to "10 phút trước",
-        30L to "30 phút trước"
+        5L * 60_000L to "5 phút trước",
+        15L * 60_000L to "15 phút trước",
+        30L * 60_000L to "30 phút trước",
+        60L * 60_000L to "1 giờ trước",
+        120L * 60_000L to "2 giờ trước"
     )
     val availableOptions = allOptions.filterNot { it.first in selectedOffsets }
 
@@ -461,7 +484,8 @@ fun ReminderPickerSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = Color.White,
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+        dragHandle = {}
     ) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
             // Title Row
@@ -610,10 +634,9 @@ fun ReminderSettingsBlock(
     reminderOffsets: List<Long>,
     onOffsetsChange: (List<Long>) -> Unit
 ) {
-    // =========== UI STATE ===========
     var showAddReminderSheet by remember { mutableStateOf(false) }
 
-    // =========== HEADER ===========
+    //Header
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -634,7 +657,7 @@ fun ReminderSettingsBlock(
             checked = isEnabled,
             onCheckedChange = {
                 onEnabledChange(it)
-                if (it && 0L !in reminderOffsets) {            // ✅ tự thêm “Đúng giờ”
+                if (it && reminderOffsets.isEmpty()) {
                     onOffsetsChange(listOf(0L))
                 }
             },
@@ -647,13 +670,15 @@ fun ReminderSettingsBlock(
         )
     }
 
-    // =========== LIST OF REMINDERS ===========
+    // List reminders
     if (isEnabled) {
-
-        Column(Modifier.padding(start = 32.dp)) {       // thụt lề
+        Column(Modifier.padding(start = 32.dp)) {
             reminderOffsets.sorted().forEach { offset ->
-                val label = if (offset == 0L) "Đúng giờ" else "$offset phút trước"
-
+                val label = when (offset) {
+                    0L -> "Đúng giờ"
+                    in 1 until 60 * 60 * 1000 -> "${offset / 60_000} phút trước"
+                    else -> "${offset / (60 * 60 * 1000)} giờ trước"
+                }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -671,7 +696,6 @@ fun ReminderSettingsBlock(
                         Text(label)
                     }
 
-                    // ❌ KHÔNG hiển thị nút Xóa cho offset = 0
                     if (offset != 0L) {
                         IconButton(onClick = {
                             onOffsetsChange(reminderOffsets - offset)
@@ -682,7 +706,7 @@ fun ReminderSettingsBlock(
                 }
             }
 
-            // =========== BUTTON “+ Thêm nhắc nhở” ===========
+            //"Thêm nhắc nhở"
             TextButton(
                 onClick = { showAddReminderSheet = true },
                 modifier = Modifier.padding(top = 4.dp)
@@ -694,13 +718,13 @@ fun ReminderSettingsBlock(
         }
     }
 
-    // =========== MODAL SHEET ===========
+    //Modal Sheet
     if (showAddReminderSheet) {
         ReminderPickerSheet(
-            selectedOffsets = reminderOffsets,          // đã gồm 0L
+            selectedOffsets = reminderOffsets,
             onDismiss      = { showAddReminderSheet = false },
             onConfirm      = { newList ->
-                val updated = (newList + 0L).distinct() // ✅ đảm bảo vẫn có 0L
+                val updated = (newList + 0L).distinct()
                 onOffsetsChange(updated)
                 showAddReminderSheet = false
             }

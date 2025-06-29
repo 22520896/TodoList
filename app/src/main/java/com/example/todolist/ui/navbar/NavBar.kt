@@ -1,5 +1,6 @@
 package com.example.todolist.ui.navbar
 
+import android.annotation.SuppressLint
 import android.graphics.drawable.shapes.Shape
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -46,14 +47,17 @@ import com.example.todolist.ui.ChooseAdd
 import com.example.todolist.ui.calendar.EventModal
 import com.example.todolist.ui.todo.TodoModal
 import com.example.todolist.ui.todo.TodoModalViewModel
+import com.example.todolist.viewmodel.CommonViewModel
 import com.example.todolist.viewmodel.NavBarViewModel
 import kotlinx.coroutines.launch
 
+@SuppressLint("StateFlowValueCalledInComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NavBar(
     navController: NavController,
     viewModel: NavBarViewModel = hiltViewModel(),
+    commonViewModel: CommonViewModel,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val leftItems = listOf(NavDes.HOME, NavDes.CALENDAR)
@@ -68,6 +72,8 @@ fun NavBar(
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val todoModalViewModel: TodoModalViewModel = hiltViewModel()
+    var todoModalKey by remember { mutableStateOf(0) }
+
 
     LaunchedEffect(Unit) {
         viewModel.event.collect { e ->
@@ -95,7 +101,10 @@ fun NavBar(
             dragHandle       = {}
         ) {
             when (currentModal) {
-                NavBarViewModel.UiEvent.ShowAddTodoModal  -> TodoModal( viewModel = todoModalViewModel, onDismiss = { currentModal = null })
+                NavBarViewModel.UiEvent.ShowAddTodoModal  -> {
+                    todoModalViewModel.startAddTodo(commonViewModel.initDate.value)
+                    TodoModal(viewModel = todoModalViewModel, onDismiss = { currentModal = null })
+                }
                 NavBarViewModel.UiEvent.ShowAddEventModal -> EventModal()
                 NavBarViewModel.UiEvent.ShowChooseModal   -> ChooseAdd()
                 else -> {}    // NavigateToNewNote không rơi vào đây

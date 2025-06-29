@@ -8,8 +8,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.count
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -26,8 +28,17 @@ class TodoViewModel @Inject constructor(private val repository: TodoRepository):
     private val _selectedDate = MutableStateFlow(LocalDate.now())
     val selectedDate = _selectedDate.asStateFlow()
 
-    private val _todos = MutableStateFlow<List<String>>(emptyList()) // Dùng String tạm thời
+    private val _todos = MutableStateFlow<List<Todo>>(emptyList())
     val todos = _todos.asStateFlow()
+
+    private val _totalTasks = MutableStateFlow(0)
+    val totalTasks = _totalTasks.asStateFlow()
+
+    private val _completedTasks = MutableStateFlow(0)
+    val completedTasks  = _completedTasks.asStateFlow()
+
+//    private val _todosByDate = MutableStateFlow<List<Todo>>(emptyList())
+//    val todosByDate = _todosByDate.asStateFlow()
 
     fun setFilter(filter: String) {
         _selectedFilter.value = filter
@@ -36,18 +47,41 @@ class TodoViewModel @Inject constructor(private val repository: TodoRepository):
 
     fun setDate(date: LocalDate) {
         _selectedDate.value = date
-        loadTodos()
     }
 
-    private fun loadTodos() {
+    fun loadTodos() {
+        when (_selectedFilter.value) {
+            "Ngày"  -> loadTodosByDate(_selectedDate.value)
+            "Tuần"  -> loadTodosByWeek(_selectedDate.value)
+            "Tháng" -> loadTodosByMonth(_selectedDate.value)
+        }
+    }
+
+    fun loadTodosByWeek(value: LocalDate?) {
+    }
+    fun loadTodosByMonth(value: LocalDate?) {
+
+    }
+
+    fun loadTodosByDate(date: LocalDate) {
         viewModelScope.launch {
-            _todos.value = when (_selectedFilter.value) {
-                "Ngày" -> listOf("Học Compose", "Gửi báo cáo", "Tập thể dục") // Giả lập
-                "Tuần" -> listOf("Họp nhóm", "Mua đồ", "Kiểm tra công việc")
-                "Tháng" -> listOf("Hoàn thành dự án", "Đi du lịch", "Học thêm")
-                else -> emptyList()
+            repository.getTodosByDate(date).collect { todos ->
+                _todos.value = todos
             }
         }
+    }
+
+    fun updateTodo(todo: Todo) {
+        viewModelScope.launch {
+            repository.updateTodo(todo)
+        }
+        loadTodos()
+    }
+    fun deleteTodo(id: Long) {
+        viewModelScope.launch {
+            repository.deleteTodo(id)
+        }
+        loadTodos()
     }
 
     init {
@@ -57,9 +91,8 @@ class TodoViewModel @Inject constructor(private val repository: TodoRepository):
 //    private val _todos = MutableStateFlow<List<Todo>>(emptyList())
 //    val todos: StateFlow<List<Todo>> get() = _todos
 //
-//    private val _todosByDate = MutableStateFlow<List<Todo>>(emptyList())
-//    val todosByDate: StateFlow<List<Todo>> get() = _todosByDate
-//
+
+
 //    private val _todosByMonth = MutableStateFlow<List<Todo>>(emptyList())
 //    val todosByMonth: StateFlow<List<Todo>> get() = _todosByMonth
 //
@@ -74,13 +107,7 @@ class TodoViewModel @Inject constructor(private val repository: TodoRepository):
 //        }
 //    }
 //
-//    fun loadTodosByDate(dateStr: String) {
-//        viewModelScope.launch {
-//            repository.getTodosByDate(dateStr).collect { todos ->
-//                _todosByDate.value = todos
-//            }
-//        }
-//    }
+
 //
 //    fun loadTodosByMonth(monthStr: String) {
 //        viewModelScope.launch {
@@ -122,7 +149,4 @@ class TodoViewModel @Inject constructor(private val repository: TodoRepository):
 //    fun deleteAllTodos() {
 //        viewModelScope.launch {
 //            repository.deleteAllTodos()
-//            loadTodos()
-//        }
-//    }
-//}
+//          

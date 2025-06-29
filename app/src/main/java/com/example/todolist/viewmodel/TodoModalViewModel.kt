@@ -1,5 +1,6 @@
 package com.example.todolist.ui.todo
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.todolist.data.entity.Todo
@@ -8,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -24,7 +26,7 @@ class TodoModalViewModel @Inject constructor(
     val isReminderEnabled = _isReminderEnabled
 
     // State cho các trường nhập liệu
-    private val _date = MutableStateFlow(LocalDateTime.now())
+    private val _date = MutableStateFlow(LocalDate.now())
     val date = _date.asStateFlow()
 
     private val _startTime = MutableStateFlow(LocalDateTime.now())
@@ -51,6 +53,9 @@ class TodoModalViewModel @Inject constructor(
     private val _isFocusEnabled = MutableStateFlow(false)
     val isFocusEnabled = _isFocusEnabled.asStateFlow()
 
+    private  val _id = MutableStateFlow(0L)
+    val id = _id.asStateFlow()
+
     // State cho validation
     private val _isValid = MutableStateFlow(true)
     val isValid = _isValid.asStateFlow()
@@ -59,10 +64,10 @@ class TodoModalViewModel @Inject constructor(
     val errorMessage = _errorMessage.asStateFlow()
 
     // Khởi tạo chế độ "thêm"
-    fun startAddTodo() {
+    fun startAddTodo(date: LocalDate = LocalDate.now()) {
         _isEditMode.value = false
         _isReminderEnabled.value = false
-        _date.value = LocalDateTime.now()
+        _date.value = date
         _startTime.value = LocalDateTime.now()
         _endTime.value = LocalDateTime.now().plusHours(1)
         _reminderOffsets.value = emptyList()
@@ -77,6 +82,7 @@ class TodoModalViewModel @Inject constructor(
 
     // Khởi tạo chế độ "chỉnh sửa"
     fun startEditTodo(todo: Todo) {
+        _id.value = todo.id
         _isEditMode.value = true
         _date.value = todo.date
         _startTime.value = todo.startTime
@@ -94,19 +100,19 @@ class TodoModalViewModel @Inject constructor(
 
     // Cập nhật các trường
 
-    fun updateDate(date: LocalDateTime) {
+    fun updateDate(date: LocalDate) {
         _date.value = date
-        validateInput()
+//        validateInput()
     }
 
     fun updateStartTime(startTime: LocalDateTime) {
         _startTime.value = startTime
-        validateInput()
+//        validateInput()
     }
 
     fun updateEndTime(endTime: LocalDateTime) {
         _endTime.value = endTime
-        validateInput()
+//        validateInput()
     }
 
     fun updateReminderOffsets(offsets: List<Long>) {
@@ -115,7 +121,7 @@ class TodoModalViewModel @Inject constructor(
 
     fun updateTitle(title: String) {
         _title.value = title
-        validateInput()
+//        validateInput()
     }
 
     fun updateDetail(detail: String) {
@@ -137,15 +143,25 @@ class TodoModalViewModel @Inject constructor(
     fun toggleReminderEnabled (){
         _isReminderEnabled.value = !_isReminderEnabled.value
     }
+
+    fun clearError(){
+        _errorMessage.value = null
+    }
     // Lưu todo
-    fun saveTodo() {
+    fun saveTodo(): Boolean {
         if (validateInput()) {
             viewModelScope.launch {
+                val reminders = if (_isReminderEnabled.value == true) {
+                    _reminderOffsets.value
+                } else {
+                    emptyList()
+                }
                 val todo = Todo(
+                    id = if (_isEditMode.value) _id.value else 0,
                     date = _date.value,
                     startTime = _startTime.value,
                     endTime = _endTime.value,
-                    reminderOffsets = _reminderOffsets.value,
+                    reminderOffsets = reminders,
                     title = _title.value,
                     detail = _detail.value,
                     isDone = _isDone.value,
@@ -159,6 +175,10 @@ class TodoModalViewModel @Inject constructor(
                 }
                 resetState()
             }
+            return true
+        }
+        else {
+            return false
         }
     }
 
@@ -172,8 +192,9 @@ class TodoModalViewModel @Inject constructor(
 
     // Reset state sau khi lưu/xóa
     private fun resetState() {
+        _id.value = 0L
         _isEditMode.value = false
-        _date.value = LocalDateTime.now()
+        _date.value = LocalDate.now()
         _startTime.value = LocalDateTime.now()
         _endTime.value = LocalDateTime.now().plusHours(1)
         _reminderOffsets.value = emptyList()
