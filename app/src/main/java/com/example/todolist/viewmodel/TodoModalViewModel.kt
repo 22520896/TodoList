@@ -1,6 +1,5 @@
 package com.example.todolist.ui.todo
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.todolist.data.entity.Todo
@@ -128,9 +127,9 @@ class TodoModalViewModel @Inject constructor(
         _detail.value = detail
     }
 
-    fun toggleIsDone() {
-        _isDone.value = !_isDone.value
-    }
+//    fun toggleIsDone() {
+//        _isDone.value = !_isDone.value
+//    }
 
     fun toggleIsHighPriority() {
         _isHighPriority.value = !_isHighPriority.value
@@ -183,9 +182,9 @@ class TodoModalViewModel @Inject constructor(
     }
 
     // Xóa todo
-    fun deleteTodo(todoId: Long) {
+    fun deleteTodo(todo: Todo) {
         viewModelScope.launch {
-            todoRepository.deleteTodo(todoId)
+            todoRepository.deleteTodo(todo)
             resetState()
         }
     }

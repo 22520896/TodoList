@@ -64,31 +64,32 @@ import java.time.ZoneId
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-
+import java.time.format.TextStyle
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodoModal(
     viewModel: TodoModalViewModel = hiltViewModel(),
+    commonViewModel: CommonViewModel,
     onDismiss: () -> Unit
 ) {
-    val isEditMode by viewModel.isEditMode.collectAsStateWithLifecycle()
     val date by viewModel.date.collectAsStateWithLifecycle()
     val startTime by viewModel.startTime.collectAsStateWithLifecycle()
     val endTime by viewModel.endTime.collectAsStateWithLifecycle()
     val reminderOffsets by viewModel.reminderOffsets.collectAsStateWithLifecycle()
     val title by viewModel.title.collectAsStateWithLifecycle()
     val detail by viewModel.detail.collectAsStateWithLifecycle()
-    val isDone by viewModel.isDone.collectAsStateWithLifecycle()
     val isHighPriority by viewModel.isHighPriority.collectAsStateWithLifecycle()
     val isFocusEnabled by viewModel.isFocusEnabled.collectAsStateWithLifecycle()
     val isValid by viewModel.isValid.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val isReminderEnabled by viewModel.isReminderEnabled.collectAsStateWithLifecycle()
+    val dateFormat by commonViewModel.dateFormat.collectAsStateWithLifecycle()
+    val timeFormat by commonViewModel.timeFormat.collectAsStateWithLifecycle()
+    val color by commonViewModel.color.collectAsStateWithLifecycle()
 
-    var localTitle by remember { mutableStateOf(title) }
-    var localDetail by remember { mutableStateOf(detail) }
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -145,16 +146,17 @@ fun TodoModal(
             date       = date,
             startTime  = startTime,
             endTime    = endTime,
-            viewModel  = viewModel
+            viewModel  = viewModel,
+            timeFormat = timeFormat
         )
-
 
         // Reminder Offsets
         ReminderSettingsBlock(
             isEnabled = isReminderEnabled,
             onEnabledChange = { viewModel.toggleReminderEnabled()},
             reminderOffsets = reminderOffsets,
-            onOffsetsChange = { viewModel.updateReminderOffsets(it) }
+            onOffsetsChange = { viewModel.updateReminderOffsets(it) },
+            color = color
         )
 
         // Checkbox
@@ -175,21 +177,8 @@ fun TodoModal(
                     modifier = Modifier.padding(end = 4.dp)
                 )
                 CommonTitleField("Ưu tiên", Modifier.padding(end = 8.dp))
-//                Text(
-//                    "Ưu tiên",
-//                    modifier = Modifier.padding(end = 8.dp)
-//                )
-//                Switch(
-//                    checked = isHighPriority,
-//                    onCheckedChange = { viewModel.toggleIsHighPriority() },
-//                    colors = SwitchDefaults.colors(
-//                        checkedThumbColor = Color(0xFF4CAF50),
-//                        checkedTrackColor = Color(0xFFB2FF59),
-//                        uncheckedThumbColor = Color.LightGray,
-//                        uncheckedTrackColor = Color(0xFFE0E0E0)
-//                    )
-//                )
-                CommonSwitch(isCheck = isHighPriority, onCheckedChange = {viewModel.toggleIsHighPriority()})
+
+                CommonSwitch(color = color, isCheck = isHighPriority, onCheckedChange = {viewModel.toggleIsHighPriority()})
             }
 
             Row(
@@ -202,21 +191,8 @@ fun TodoModal(
                     modifier = Modifier.padding(end = 4.dp)
                 )
                 CommonTitleField("Tập trung", Modifier.padding(end = 8.dp))
-//                Text(
-//                    "Tập trung",
-//                    modifier = Modifier.padding(end = 8.dp)
-//                )
-//                Switch(
-//                    checked = isFocusEnabled,
-//                    onCheckedChange = { viewModel.toggleIsFocusEnabled() },
-//                    modifier = Modifier.scale(0.8f),
-//                    colors = SwitchDefaults.colors(
-//                        checkedThumbColor = Color.White,
-//                        checkedTrackColor = Color(0xFF4CAF50),
-//                        uncheckedTrackColor = Color.LightGray
-//                    )
-//                )
-                CommonSwitch(isCheck = isFocusEnabled, onCheckedChange = {viewModel.toggleIsFocusEnabled()})
+
+                CommonSwitch(color = color, isCheck = isFocusEnabled, onCheckedChange = {viewModel.toggleIsFocusEnabled()})
             }
         }
     }
@@ -297,7 +273,8 @@ fun DateTimeSection(
     date: LocalDate,
     startTime: LocalDateTime,
     endTime: LocalDateTime,
-    viewModel: TodoModalViewModel
+    viewModel: TodoModalViewModel,
+    timeFormat: String
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     var showStartTimePicker by remember { mutableStateOf(false) }
@@ -319,7 +296,7 @@ fun DateTimeSection(
         initialMinute = endTime.minute
     )
 
-    val timeFormatter = DateTimeFormatter.ofPattern("hh:mm a", Locale.US)
+    val timeFormatter = DateTimeFormatter.ofPattern(timeFormat, Locale("vi", "VN"))
 
     Box(
         modifier = Modifier
@@ -328,7 +305,7 @@ fun DateTimeSection(
             .border(1.dp, Color.Black, RoundedCornerShape(12.dp))
             .padding(12.dp)
     ) {
-        Column {
+        Column (verticalArrangement = Arrangement.Center){
             // Tiêu đề
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
@@ -342,16 +319,13 @@ fun DateTimeSection(
 
             Spacer(Modifier.height(8.dp))
 
-            // Ngày bắt đầu
-            Text(
-                text = "Ngày bắt đầu",
-                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 16.sp)
-            )
-            TextButton(
-                onClick = { showDatePicker = true },
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Text(date.toString(), fontSize = 16.sp)
+            Box(contentAlignment = Alignment.Center) {
+                TextButton(
+                    onClick = { showDatePicker = true },
+                ) {
+                    val dateText = "${date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale("vi", "VN")).replaceFirstChar { it.uppercase() }}, ${date.dayOfMonth} tháng ${date.monthValue} năm ${date.year}"
+                    Text(dateText, fontSize = 16.sp)
+                }
             }
 
             Spacer(Modifier.height(4.dp))
@@ -361,7 +335,7 @@ fun DateTimeSection(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column {
+                Column (verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally){
                     Text("Giờ bắt đầu", style = MaterialTheme.typography.bodySmall)
                     TextButton(
                         onClick = { showStartTimePicker = true },
@@ -371,7 +345,13 @@ fun DateTimeSection(
                     }
                 }
 
-                Column {
+                Icon(
+                    imageVector = Icons.Default.ArrowForward,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 4.dp)
+                )
+
+                Column (verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("Giờ kết thúc", style = MaterialTheme.typography.bodySmall)
                     TextButton(
                         onClick = { showEndTimePicker = true },
@@ -412,9 +392,15 @@ fun DateTimeSection(
             onDismissRequest = { showStartTimePicker = false },
             confirmButton = {
                 TextButton(onClick = {
+                    val newStartTime = LocalDateTime.of(
+                        date,
+                        LocalTime.of(
+                            startTimePickerState.hour,
+                            startTimePickerState.minute
+                        )
+                    )
                     viewModel.updateStartTime(
-                        startTime.withHour(startTimePickerState.hour)
-                            .withMinute(startTimePickerState.minute)
+                        newStartTime
                     )
                     showStartTimePicker = false
                 }) { Text("OK") }
@@ -439,9 +425,15 @@ fun DateTimeSection(
             onDismissRequest = { showEndTimePicker = false },
             confirmButton = {
                 TextButton(onClick = {
+                    val newStartTime = LocalDateTime.of(
+                        date,
+                        LocalTime.of(
+                            endTimePickerState.hour,
+                            endTimePickerState.minute
+                        )
+                    )
                     viewModel.updateEndTime(
-                        endTime.withHour(endTimePickerState.hour)
-                            .withMinute(endTimePickerState.minute)
+                        newStartTime
                     )
                     showEndTimePicker = false
                 }) { Text("OK") }
@@ -539,100 +531,14 @@ fun ReminderPickerSheet(
     }
 }
 
-//@OptIn(ExperimentalMaterial3Api::class)
-//@Composable
-//fun ReminderSettingsBlock(
-//    isEnabled: Boolean,
-//    onEnabledChange: (Boolean) -> Unit,
-//    reminderOffsets: List<Long>,
-//    onOffsetsChange: (List<Long>) -> Unit
-//) {
-//    var showAddReminderSheet by remember { mutableStateOf(false) }
-//
-//    Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
-//        // Tiêu đề + Switch
-//        Row(
-//            modifier = Modifier.fillMaxWidth(),
-//            horizontalArrangement = Arrangement.SpaceBetween,
-//            verticalAlignment = Alignment.CenterVertically
-//        ) {
-//            Row(verticalAlignment = Alignment.CenterVertically) {
-//                Icon(Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF4CAF50), modifier = Modifier.padding(end = 4.dp))
-//                CommonTitleField("Cài đặt nhắc nhở")
-////                Text("  Cài đặt nhắc nhở", fontWeight = FontWeight.SemiBold)
-//            }
-//            Switch(checked = isEnabled, onCheckedChange = {
-//                onEnabledChange(it)
-////                if (!it) onOffsetsChange(emptyList())
-//            },
-//                modifier = Modifier.scale(0.8f), // ✅ Switch nhỏ hơn
-//                colors = SwitchDefaults.colors(
-//                    checkedThumbColor = Color.White,
-//                    checkedTrackColor = Color(0xFF4CAF50), // ✅ Màu xanh
-//                    uncheckedTrackColor = Color.LightGray
-//                ))
-//        }
-//
-//        // Nếu bật
-//        if (isEnabled) {
-//            reminderOffsets.forEach { offset ->
-//                val label = when (offset) {
-//                    0L -> "Đúng giờ"
-//                    else -> "$offset phút trước"
-//                }
-//
-//                Row(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(vertical = 6.dp),
-//                    horizontalArrangement = Arrangement.SpaceBetween,
-//                    verticalAlignment = Alignment.CenterVertically
-//                ) {
-//                    Row(verticalAlignment = Alignment.CenterVertically) {
-//                        Icon(Icons.Default.Phone, contentDescription = null, tint = Color(0xFF4CAF50))
-//                        Spacer(modifier = Modifier.width(6.dp))
-//                        Text(label)
-//                    }
-//                    IconButton(onClick = {
-//                        onOffsetsChange(reminderOffsets - offset)
-//                    }) {
-//                        Icon(Icons.Default.Close, contentDescription = "Xóa")
-//                    }
-//                }
-//            }
-//
-//            // Nút thêm nhắc nhở
-//            TextButton(
-//                onClick = { showAddReminderSheet = true },
-//                modifier = Modifier.padding(top = 4.dp)
-//            ) {
-//                Icon(Icons.Default.Add, contentDescription = null)
-//                Spacer(Modifier.width(4.dp))
-//                Text("Thêm nhắc nhở")
-//            }
-//        }
-//
-//        // Modal Bottom Sheet để chọn nhắc nhở
-//        if (showAddReminderSheet) {
-//            ReminderPickerSheet(
-//                selectedOffsets = reminderOffsets,
-//                onDismiss = { showAddReminderSheet = false },
-//                onConfirm = { newList ->
-//                    onOffsetsChange(newList)
-//                    showAddReminderSheet = false
-//                }
-//            )
-//        }
-//    }
-//}
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReminderSettingsBlock(
+    color: String,
     isEnabled: Boolean,
     onEnabledChange: (Boolean) -> Unit,
     reminderOffsets: List<Long>,
-    onOffsetsChange: (List<Long>) -> Unit
+    onOffsetsChange: (List<Long>) -> Unit,
 ) {
     var showAddReminderSheet by remember { mutableStateOf(false) }
 
@@ -648,26 +554,33 @@ fun ReminderSettingsBlock(
             Icon(
                 Icons.Default.Notifications,
                 contentDescription = null,
-                tint = Color(0xFF4CAF50),
+//                tint = Color(0xFF4CAF50),
                 modifier = Modifier.padding(end = 4.dp)
             )
-            Text("Cài đặt nhắc nhở", fontWeight = FontWeight.SemiBold)
+            CommonTitleField("Cài đặt nhắc nhở", Modifier)
         }
-        Switch(
-            checked = isEnabled,
-            onCheckedChange = {
+        CommonSwitch(color = color, isCheck = isEnabled, onCheckedChange = {
                 onEnabledChange(it)
                 if (it && reminderOffsets.isEmpty()) {
                     onOffsetsChange(listOf(0L))
                 }
-            },
-            modifier = Modifier.scale(0.8f),
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = Color(0xFF4CAF50),
-                uncheckedTrackColor = Color.LightGray
-            )
-        )
+        })
+
+//        Switch (
+//            checked = isEnabled,
+//            onCheckedChange = {
+//                onEnabledChange(it)
+//                if (it && reminderOffsets.isEmpty()) {
+//                    onOffsetsChange(listOf(0L))
+//                }
+//            },
+//            modifier = Modifier.scale(0.8f),
+//            colors = SwitchDefaults.colors(
+//                checkedThumbColor = Color.White,
+//                checkedTrackColor = Color(0xFF4CAF50),
+//                uncheckedTrackColor = Color.LightGray
+//            )
+//        )
     }
 
     // List reminders
@@ -690,7 +603,7 @@ fun ReminderSettingsBlock(
                         Icon(
                             Icons.Default.AccountCircle,
                             contentDescription = null,
-                            tint = Color(0xFF4CAF50)
+//                            tint = Color(0xFF4CAF50)
                         )
                         Spacer(Modifier.width(6.dp))
                         Text(label)

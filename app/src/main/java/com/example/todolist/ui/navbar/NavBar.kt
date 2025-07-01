@@ -40,6 +40,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -49,6 +50,7 @@ import com.example.todolist.ui.todo.TodoModal
 import com.example.todolist.ui.todo.TodoModalViewModel
 import com.example.todolist.viewmodel.CommonViewModel
 import com.example.todolist.viewmodel.NavBarViewModel
+import com.example.todolist.viewmodel.ReportViewModel
 import kotlinx.coroutines.launch
 
 @SuppressLint("StateFlowValueCalledInComposition")
@@ -66,14 +68,11 @@ fun NavBar(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
-
-    /* ------ listen UiEvent ------ */
     var currentModal by remember { mutableStateOf<NavBarViewModel.UiEvent?>(null) }
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val todoModalViewModel: TodoModalViewModel = hiltViewModel()
-    var todoModalKey by remember { mutableStateOf(0) }
-
+    val color by commonViewModel.color.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.event.collect { e ->
@@ -103,7 +102,7 @@ fun NavBar(
             when (currentModal) {
                 NavBarViewModel.UiEvent.ShowAddTodoModal  -> {
                     todoModalViewModel.startAddTodo(commonViewModel.initDate.value)
-                    TodoModal(viewModel = todoModalViewModel, onDismiss = { currentModal = null })
+                    TodoModal(viewModel = todoModalViewModel, commonViewModel = commonViewModel, onDismiss = { currentModal = null })
                 }
                 NavBarViewModel.UiEvent.ShowAddEventModal -> EventModal()
                 NavBarViewModel.UiEvent.ShowChooseModal   -> ChooseAdd()
@@ -112,7 +111,7 @@ fun NavBar(
         }
     }
 
-
+    val bgColor = Color(android.graphics.Color.parseColor(color))
     Scaffold(
         Modifier.safeDrawingPadding(),
         floatingActionButtonPosition = FabPosition.Center,
@@ -120,7 +119,7 @@ fun NavBar(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { viewModel.onFabClick(currentRoute) },
-                backgroundColor = Color(0xFF4CAF81),
+                backgroundColor = bgColor,
                 contentColor = Color.White,
                 shape = CircleShape,
                 modifier = Modifier.size(72.dp),
@@ -154,7 +153,7 @@ fun NavBar(
                             )
                         },
                         selected = currentRoute == item.route || (item.route == NavDes.HOME.route && (currentRoute == NavDes.TODO.route || currentRoute == NavDes.NOTE.route)),
-                        selectedContentColor = Color(0xFF4CAF81),
+                        selectedContentColor = bgColor,
                         unselectedContentColor = Color.Gray,
                         onClick = {
                             navController.navigate(item.route) {
@@ -180,7 +179,7 @@ fun NavBar(
                             )
                         },
                         selected = currentRoute == item.route,
-                        selectedContentColor = Color(0xFF4CAF81),
+                        selectedContentColor = bgColor,
                         unselectedContentColor = Color.Gray,
                         onClick = {
                             navController.navigate(item.route) {

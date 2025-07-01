@@ -13,12 +13,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
+import java.time.temporal.IsoFields
 
 
-enum class DateFilter(val label: String) {
-    DAY("Ngày"), WEEK("Tuần"), MONTH("Tháng")
-}
+//enum class DateFilter(val label: String) {
+//    DAY("Ngày"), WEEK("Tuần"), MONTH("Tháng")
+//}
 @HiltViewModel
 class TodoViewModel @Inject constructor(private val repository: TodoRepository): ViewModel() {
 
@@ -31,14 +33,6 @@ class TodoViewModel @Inject constructor(private val repository: TodoRepository):
     private val _todos = MutableStateFlow<List<Todo>>(emptyList())
     val todos = _todos.asStateFlow()
 
-    private val _totalTasks = MutableStateFlow(0)
-    val totalTasks = _totalTasks.asStateFlow()
-
-    private val _completedTasks = MutableStateFlow(0)
-    val completedTasks  = _completedTasks.asStateFlow()
-
-//    private val _todosByDate = MutableStateFlow<List<Todo>>(emptyList())
-//    val todosByDate = _todosByDate.asStateFlow()
 
     fun setFilter(filter: String) {
         _selectedFilter.value = filter
@@ -47,6 +41,7 @@ class TodoViewModel @Inject constructor(private val repository: TodoRepository):
 
     fun setDate(date: LocalDate) {
         _selectedDate.value = date
+        loadTodos()
     }
 
     fun loadTodos() {
@@ -57,10 +52,27 @@ class TodoViewModel @Inject constructor(private val repository: TodoRepository):
         }
     }
 
-    fun loadTodosByWeek(value: LocalDate?) {
+    fun loadTodosByWeek(date: LocalDate) {
+        val weekStr = with(date) {
+            "%d-%02d".format(
+                get(IsoFields.WEEK_BASED_YEAR),
+                (get(IsoFields.WEEK_OF_WEEK_BASED_YEAR) - 1).coerceAtLeast(0)
+            )
+        }
+        viewModelScope.launch {
+            repository.getTodosByWeek(weekStr).collect { todos ->
+                _todos.value = todos
+            }
+        }
     }
-    fun loadTodosByMonth(value: LocalDate?) {
 
+    fun loadTodosByMonth(date: LocalDate) {
+        val monthStr = date.format(DateTimeFormatter.ofPattern("yyyy-MM"))
+        viewModelScope.launch {
+            repository.getTodosByMonth(monthStr).collect { todos ->
+                _todos.value = todos
+            }
+        }
     }
 
     fun loadTodosByDate(date: LocalDate) {
@@ -75,78 +87,18 @@ class TodoViewModel @Inject constructor(private val repository: TodoRepository):
         viewModelScope.launch {
             repository.updateTodo(todo)
         }
-        loadTodos()
+//        loadTodos()
     }
-    fun deleteTodo(id: Long) {
+
+
+    fun deleteTodo(todo: Todo) {
         viewModelScope.launch {
-            repository.deleteTodo(id)
+            repository.deleteTodo(todo)
         }
-        loadTodos()
+//        loadTodos()
     }
 
     init {
         loadTodos()
     }
 }
-//    private val _todos = MutableStateFlow<List<Todo>>(emptyList())
-//    val todos: StateFlow<List<Todo>> get() = _todos
-//
-
-
-//    private val _todosByMonth = MutableStateFlow<List<Todo>>(emptyList())
-//    val todosByMonth: StateFlow<List<Todo>> get() = _todosByMonth
-//
-//    private val _todosByWeek = MutableStateFlow<List<Todo>>(emptyList())
-//    val todosByWeek: StateFlow<List<Todo>> get() = _todosByWeek
-//
-//    fun loadTodos() {
-//        viewModelScope.launch {
-//            repository.getAllTodos().collect { todos ->
-//                _todos.value = todos
-//            }
-//        }
-//    }
-//
-
-//
-//    fun loadTodosByMonth(monthStr: String) {
-//        viewModelScope.launch {
-//            repository.getTodosByMonth(monthStr).collect { todos ->
-//                _todosByMonth.value = todos
-//            }
-//        }
-//    }
-//
-//    fun loadTodosByWeek(weekStr: String) {
-//        viewModelScope.launch {
-//            repository.getTodosByWeek(weekStr).collect { todos ->
-//                _todosByWeek.value = todos
-//            }
-//        }
-//    }
-//
-//    fun addTodo(todo: Todo) {
-//        viewModelScope.launch {
-//            repository.insert(todo)
-//            loadTodos()
-//        }
-//    }
-//
-//    fun updateTodo(todo: Todo) {
-//        viewModelScope.launch {
-//            repository.update(todo)
-//            loadTodos()
-//        }
-//    }
-//
-//    fun deleteTodo(id: Long) {
-//        viewModelScope.launch {
-//            repository.deleteTodo(id)
-//            loadTodos()
-//        }
-//    }
-//
-//    fun deleteAllTodos() {
-//        viewModelScope.launch {
-//            repository.deleteAllTodos()
-//          

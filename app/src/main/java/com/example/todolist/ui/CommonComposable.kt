@@ -12,13 +12,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun CommonSwitch(isCheck: Boolean, onCheckedChange: (Boolean) -> Unit){
+fun CommonSwitch(color: String, isCheck: Boolean, onCheckedChange: (Boolean) -> Unit){
     Switch(checked = isCheck,
         onCheckedChange = onCheckedChange,
         modifier = Modifier.scale(0.8f),
         colors = SwitchDefaults.colors(
             checkedThumbColor = Color.White,
-            checkedTrackColor = Color(0xFF4CAF50),
+            checkedTrackColor = Color(android.graphics.Color.parseColor(color)),
             uncheckedTrackColor = Color.LightGray
         ))
 }

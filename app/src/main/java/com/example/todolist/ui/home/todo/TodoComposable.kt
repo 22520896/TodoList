@@ -56,14 +56,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.todolist.R
 import com.example.todolist.data.entity.Todo
 import com.example.todolist.ui.CommonTitleField
-import com.example.todolist.viewmodel.DateFilter
 import com.example.todolist.viewmodel.TodoViewModel
 import kotlinx.coroutines.launch
+import java.text.DateFormat
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.time.temporal.WeekFields
 import java.util.Locale
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -109,9 +110,9 @@ fun TodoTopNavBar(
     val items = listOf("Ngày", "Tuần", "Tháng")
 
     TopAppBar(
-        backgroundColor = Color.Transparent,
+        backgroundColor = Color.White,
         elevation = 0.dp,
-        contentPadding = PaddingValues(vertical = 8.dp),
+        contentPadding = PaddingValues(vertical = 0.dp),
     ) {
         Box(
             modifier = Modifier.fillMaxWidth(),
@@ -133,7 +134,7 @@ fun TodoTopNavBar(
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .clip(RoundedCornerShape(14.dp))
+                            .clip(RoundedCornerShape(10.dp))
                             .background(
                                 if (selected) Color(0xFFFF9800) else Color.Transparent
                             )
@@ -169,6 +170,7 @@ fun TodoTopNavBar(
 
 @Composable
 fun HorizontalCalendar(
+    color: String,
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier
@@ -199,10 +201,11 @@ fun HorizontalCalendar(
             .fillMaxWidth()
             .height(100.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
-        contentPadding = PaddingValues(horizontal = 12.dp)
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
     ) {
         items(allDates) { date ->
             DayItem(
+                color = color,
                 date = date,
                 isSelected = date == selectedDate,
                 isToday = date == today,
@@ -217,15 +220,17 @@ fun HorizontalCalendar(
 
 @Composable
 private fun DayItem(
+    color: String,
     date: LocalDate,
     isSelected: Boolean,
     isToday: Boolean,
     onClick: () -> Unit
 ) {
-    val bg   = if (isSelected) Color(0xFF4CAF81) else Color.White
+    val bgColor = Color(android.graphics.Color.parseColor(color))
+    val bg   = if (isSelected) bgColor else Color.Transparent
     val text = if (isSelected) Color.White
-    else if (isToday) Color(0xFF4CAF81) else Color.Black
-    val border = if (isToday && !isSelected) Color(0xFF4CAF81) else Color.Transparent
+    else if (isToday) bgColor else Color.Black
+    val border = if (isToday && !isSelected) bgColor else Color.Gray
 
     Column(
         Modifier
@@ -250,14 +255,16 @@ private fun DayItem(
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterialApi::class)
 @Composable
 fun TodoItemCard(
+    dateFormat: String,
+    timeFormat: String,
     todo: Todo,
     onCheckedChange: (Boolean) -> Unit,
     onClick: () -> Unit,
     onDeleteConfirmed: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val formatterDate = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.getDefault())
-    val formatterTime = DateTimeFormatter.ofPattern("hh:mm a", Locale.getDefault())
+    val formatterDate = DateTimeFormatter.ofPattern(dateFormat)
+    val formatterTime = DateTimeFormatter.ofPattern(timeFormat)
 
     val backgroundColor = if (todo.isHighPriority) Color(0xFFFFF3CD) else Color.White
     val borderColor = Color.LightGray
@@ -269,7 +276,7 @@ fun TodoItemCard(
         confirmStateChange = {
             if (it == DismissValue.DismissedToStart) {
                 showConfirmDialog = true
-                false // Không tự động xóa khi trượt
+                false
             } else true
         }
     )
@@ -301,10 +308,10 @@ fun TodoItemCard(
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top,
+                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                         IconButton(onClick = { onCheckedChange(!todo.isDone) }) {
                             Icon(
                                 imageVector = if (todo.isDone) Icons.Filled.CheckCircle else Icons.Outlined.CheckCircle,
@@ -317,7 +324,9 @@ fun TodoItemCard(
                         Column {
                             Text(
                                 text = todo.title,
-                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                             Text(
                                 text = todo.detail,
@@ -330,7 +339,8 @@ fun TodoItemCard(
 
                     Column(
                         horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.SpaceBetween
+                        verticalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.padding(start = 8.dp)
                     ) {
                         Text(
                             text = todo.date.format(formatterDate),
@@ -402,7 +412,6 @@ fun OverviewCard(
     val completedTasks = todos.count{it.isDone}
 
     val progress = if (totalTasks == 0) 0f else completedTasks.toFloat() / totalTasks
-    val image = painterResource(R.drawable.cat)
 
     Box(
         modifier = modifier
@@ -410,7 +419,7 @@ fun OverviewCard(
             .height(160.dp)
             .clip(RoundedCornerShape(24.dp))
             .background(Color.Transparent)
-            .padding(horizontal = 12.dp, vertical = 14.dp)
+            .padding(horizontal = 10.dp, vertical = 12.dp)
     ) {
         Image(
             painter = painterResource(id = R.drawable.cat), // thay bằng ảnh bạn cung cấp
@@ -433,16 +442,6 @@ fun OverviewCard(
                 Text("$totalTasks nhiệm vụ", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = Color.White)
             }
 
-//            // Ảnh mèo
-//            Image(
-//                painter = image,
-//                contentDescription = "Mèo minh họa",
-//                modifier = Modifier
-//                    .weight(1f)
-//                    .padding(horizontal = 12.dp)
-//                    .fillMaxHeight(),
-//                contentScale = ContentScale.Fit
-//            )
 
             // Bên phải: Vòng tròn phần trăm
             Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(end = 10.dp)) {
@@ -460,5 +459,182 @@ fun OverviewCard(
                 )
             }
         }
+    }
+}
+
+
+@Composable
+fun HorizontalWeekCalendar(
+    color: String,
+    selectedDate: LocalDate,
+    onWeekSelected: (LocalDate) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val today = LocalDate.now()
+
+    val weeks = remember {
+        val start = today.minusMonths(6)
+        val end = today.plusMonths(6)
+
+        generateSequence(start.with(DayOfWeek.MONDAY)) { it.plusWeeks(1) }
+            .takeWhile { it <= end }
+            .toList()
+    }
+
+    val scrollState = rememberLazyListState(
+        initialFirstVisibleItemIndex = weeks.indexOfFirst { it == selectedDate.with(DayOfWeek.MONDAY) }.coerceAtLeast(0)
+    )
+
+    LazyRow(
+        state = scrollState,
+        modifier = modifier.height(100.dp),
+        contentPadding = PaddingValues(horizontal = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(weeks) { startOfWeek ->
+            val endOfWeek = startOfWeek.plusDays(6)
+            val isSelected = selectedDate.with(DayOfWeek.MONDAY) == startOfWeek
+            val isCurrent = today.with(DayOfWeek.MONDAY) == startOfWeek
+
+            WeekItem(
+                startDate = startOfWeek,
+                endDate = endOfWeek,
+                isSelected = isSelected,
+                isCurrent = isCurrent,
+                color = color,
+                onClick = { onWeekSelected(startOfWeek) }
+            )
+        }
+    }
+}
+
+@Composable
+fun WeekItem(
+    startDate: LocalDate,
+    endDate: LocalDate,
+    isSelected: Boolean,
+    isCurrent: Boolean,
+    color: String,
+    onClick: () -> Unit
+) {
+    val bgColor = Color(android.graphics.Color.parseColor(color))
+    val bg   = if (isSelected) bgColor else Color.Transparent
+    val text = if (isSelected) Color.White else if (isCurrent) bgColor else Color.Black
+    val border = if (isCurrent && !isSelected) bgColor else Color.Gray
+    val today = if (isCurrent) FontWeight.Bold else FontWeight.Normal
+
+    Column(modifier = Modifier
+            .width(70.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .border(1.dp, border, RoundedCornerShape(10.dp))
+            .background(bg)
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally) {
+
+        Text(
+            text = "${startDate.year}",
+            fontSize = 9.sp,
+            color = text,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = "${startDate.dayOfMonth} - ${endDate.dayOfMonth}",
+            fontSize = 16.sp,
+            color = text,
+            fontWeight = today
+        )
+        Text(
+            text = "Th${startDate.monthValue}",
+            fontSize = 12.sp,
+            color = text,
+            fontWeight = today
+        )
+
+        }
+}
+
+@Composable
+fun HorizontalMonthCalendar(
+    color: String,
+    selectedDate: LocalDate,
+    onMonthSelected: (LocalDate) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val today = LocalDate.now()
+
+    val months = remember {
+        val start = today.minusMonths(6).withDayOfMonth(1)
+        val end = today.plusMonths(6).withDayOfMonth(1)
+
+        generateSequence(start) { it.plusMonths(1) }
+            .takeWhile { it <= end }
+            .toList()
+    }
+
+    val scrollState = rememberLazyListState(
+        initialFirstVisibleItemIndex = months.indexOfFirst {
+            it.month == selectedDate.month && it.year == selectedDate.year
+        }.coerceAtLeast(0)
+    )
+
+    LazyRow(
+        state = scrollState,
+        modifier = modifier.height(100.dp),
+        contentPadding = PaddingValues(horizontal = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(months) { firstDayOfMonth ->
+            val isSelected = selectedDate.month == firstDayOfMonth.month && selectedDate.year == firstDayOfMonth.year
+            val isCurrent = today.month == firstDayOfMonth.month && today.year == firstDayOfMonth.year
+
+            MonthItem(
+                monthDate = firstDayOfMonth,
+                isSelected = isSelected,
+                isCurrent = isCurrent,
+                color = color,
+                onClick = { onMonthSelected(firstDayOfMonth) }
+            )
+        }
+    }
+}
+
+
+@Composable
+fun MonthItem(
+    monthDate: LocalDate,
+    isSelected: Boolean,
+    isCurrent: Boolean,
+    color: String,
+    onClick: () -> Unit
+) {
+    val bgColor = Color(android.graphics.Color.parseColor(color))
+    val bg = if (isSelected) bgColor else Color.Transparent
+    val textColor = if (isSelected) Color.White else if (isCurrent) bgColor else Color.Black
+    val border = if (isCurrent && !isSelected) bgColor else Color.Gray
+    val weight = if (isCurrent) FontWeight.Bold else FontWeight.Normal
+
+    Column(
+        modifier = Modifier
+            .width(70.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .border(1.dp, border, RoundedCornerShape(10.dp))
+            .background(bg)
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Th${monthDate.monthValue}",
+            fontSize = 16.sp,
+            fontWeight = weight,
+            color = textColor
+        )
+        Text(
+            text = "${monthDate.year}",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = textColor
+        )
     }
 }

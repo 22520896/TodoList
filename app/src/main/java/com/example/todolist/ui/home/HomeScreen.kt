@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.todolist.ui.home.todo.HorizontalCalendar
@@ -47,8 +48,9 @@ import com.example.todolist.viewmodel.CommonViewModel
 @Composable
 fun HomeScreen(navController: NavController, commonViewModel: CommonViewModel = hiltViewModel()){
     val childNav = rememberNavController()
-    Column {
-        TopNavBar(navController = childNav)
+    val color by commonViewModel.color.collectAsStateWithLifecycle()
+    Column  {
+        TopNavBar(navController = childNav, color = color)
         NavHost(
             navController = childNav,
             startDestination = NavDes.TODO.route,
@@ -63,15 +65,15 @@ fun HomeScreen(navController: NavController, commonViewModel: CommonViewModel = 
 
 // Điều hướng Todo/Note
 @Composable
-fun TopNavBar(navController: NavController) {
+fun TopNavBar(navController: NavController, color: String) {
     val items = listOf(NavDes.TODO, NavDes.NOTE)
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: NavDes.TODO.route
 
     TopAppBar(
-        backgroundColor = Color.Transparent,
+        backgroundColor = Color.White,
         elevation = 0.dp,
-        contentPadding = PaddingValues(vertical = 8.dp),
+        contentPadding = PaddingValues(top = 2.dp),
         modifier = Modifier.safeDrawingPadding()
     ) {
         Box(
@@ -80,7 +82,6 @@ fun TopNavBar(navController: NavController) {
             contentAlignment = Alignment.Center
         ) {
 
-            //Khung segmented
             Row(
                 modifier = Modifier
                     .width(200.dp)
@@ -99,7 +100,7 @@ fun TopNavBar(navController: NavController) {
                             .weight(1f)
                             .clip(RoundedCornerShape(12.dp))
                             .background(
-                                if (selected) Color(0xFF4CAF81) else Color.Transparent
+                                if (selected) Color(android.graphics.Color.parseColor(color)) else Color.Transparent
                             )
                             .height(33.dp)
                             .clickable {
