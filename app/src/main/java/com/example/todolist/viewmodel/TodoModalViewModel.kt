@@ -168,7 +168,7 @@ class TodoModalViewModel @Inject constructor(
                     isFocusEnabled = _isFocusEnabled.value
                 )
                 if (_isEditMode.value) {
-                    todoRepository.updateTodo(todo.copy(id = todoRepository.getTodoById(todo.id)?.id ?: 0))
+                    todoRepository.updateTodo(todo)
                 } else {
                     todoRepository.insertTodo(todo)
                 }
@@ -181,13 +181,6 @@ class TodoModalViewModel @Inject constructor(
         }
     }
 
-    // Xóa todo
-    fun deleteTodo(todo: Todo) {
-        viewModelScope.launch {
-            todoRepository.deleteTodo(todo)
-            resetState()
-        }
-    }
 
     // Reset state sau khi lưu/xóa
     private fun resetState() {

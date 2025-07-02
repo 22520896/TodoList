@@ -24,16 +24,14 @@ class NavBarViewModel @Inject constructor() : ViewModel() {
     val event: SharedFlow<UiEvent> = _event
 
     /** hàm được gọi khi FAB click, tùy route phát event */
-    fun onFabClick(currentRoute: String?) {
-        viewModelScope.launch {
-            when (currentRoute) {
-                NavDes.TODO.route       -> _event.emit(UiEvent.ShowAddTodoModal)
-                NavDes.CALENDAR.route   -> _event.emit(UiEvent.ShowAddEventModal)
-                NavDes.NOTE.route       -> _event.emit(UiEvent.NavigateToNewNote)
-                NavDes.REPORT.route,
-                NavDes.SETTING.route    -> _event.emit(UiEvent.ShowChooseModal)
-                else                    -> _event.emit(UiEvent.ShowAddTodoModal)
-            }
+    fun onFabClick(currentRoute: String?) = viewModelScope.launch {
+        when (currentRoute) {
+            NavDes.TODO.route     -> _event.emit(UiEvent.ShowAddTodoModal)
+            NavDes.CALENDAR.route  -> _event.emit(UiEvent.ShowAddEventModal)
+            NavDes.NOTE.route    -> _event.emit(UiEvent.NavigateToNewNote)
+            NavDes.REPORT.route,
+            NavDes.SETTING.route   -> _event.emit(UiEvent.ShowChooseModal)
+            else -> _event.emit(UiEvent.ShowAddTodoModal)
         }
     }
 

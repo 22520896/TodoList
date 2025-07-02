@@ -113,7 +113,7 @@ fun DayTodoScreen(viewModel: TodoViewModel, commonViewModel: CommonViewModel) {
             selectedDate = selectedDate,
             onDateSelected = { viewModel.setDate(it)
                 commonViewModel.updateInitDate(it)},
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 0.dp)
         )
         OverviewCard(
             date = selectedDate.format(DateTimeFormatter.ofPattern(dateFormat)),
@@ -125,6 +125,7 @@ fun DayTodoScreen(viewModel: TodoViewModel, commonViewModel: CommonViewModel) {
                 TodoItemCard(
                     dateFormat = dateFormat,
                     timeFormat = timeFormat,
+                    color = color,
                     todo = todo,
                     onCheckedChange = { checked ->
                         viewModel.updateTodo(todo.copy(isDone = checked))
@@ -208,6 +209,7 @@ fun WeekTodoScreen(
                 TodoItemCard(
                     dateFormat = dateFormat,
                     timeFormat = timeFormat,
+                    color = color,
                     todo = todo,
                     onCheckedChange = { checked ->
                         viewModel.updateTodo(todo.copy(isDone = checked))
@@ -294,6 +296,7 @@ fun MonthTodoScreen(
                 TodoItemCard(
                     dateFormat = dateFormat,
                     timeFormat = timeFormat,
+                    color = color,
                     todo = todo,
                     onCheckedChange = { checked ->
                         viewModel.updateTodo(todo.copy(isDone = checked))

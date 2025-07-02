@@ -3,7 +3,7 @@ package com.example.todolist.ui.todo
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -50,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -100,7 +101,7 @@ fun TodoModal(
     ) {
         // Tiêu đề căn giữa
         Text(
-            text = "TODO",
+            text = "NHIỆM VỤ",
             fontWeight = FontWeight.SemiBold,
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.align(Alignment.Center)
@@ -171,7 +172,7 @@ fun TodoModal(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Default.Star,
+                    imageVector = Icons.Default.PriorityHigh,
                     contentDescription = "Ưu tiên",
                     tint = Color(0xFFFFC107),
                     modifier = Modifier.padding(end = 4.dp)
@@ -185,7 +186,7 @@ fun TodoModal(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Default.Favorite,
+                    imageVector = Icons.Default.Timelapse,
                     contentDescription = "Tập trung",
                     tint = Color(0xFF2196F3),
                     modifier = Modifier.padding(end = 4.dp)
@@ -302,14 +303,15 @@ fun DateTimeSection(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 12.dp)
-            .border(1.dp, Color.Black, RoundedCornerShape(12.dp))
+            .shadow(3.dp, RoundedCornerShape(12.dp)) // Bóng nhẹ
+            .background(Color.White, RoundedCornerShape(12.dp)) // Nền trắng
             .padding(12.dp)
     ) {
-        Column (verticalArrangement = Arrangement.Center){
+        Column(verticalArrangement = Arrangement.Center) {
             // Tiêu đề
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Default.DateRange,
+                    imageVector = Icons.Default.CalendarMonth,
                     contentDescription = "Thời gian thực hiện",
                     tint = Color(0xFF2196F3),
                     modifier = Modifier.padding(end = 4.dp)
@@ -319,7 +321,11 @@ fun DateTimeSection(
 
             Spacer(Modifier.height(8.dp))
 
-            Box(contentAlignment = Alignment.Center) {
+            // Ngày
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
                 TextButton(
                     onClick = { showDatePicker = true },
                 ) {
@@ -333,9 +339,13 @@ fun DateTimeSection(
             // Giờ bắt đầu & kết thúc
             Row(
                 modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically, // Căn giữa theo chiều dọc
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column (verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally){
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Text("Giờ bắt đầu", style = MaterialTheme.typography.bodySmall)
                     TextButton(
                         onClick = { showStartTimePicker = true },
@@ -348,10 +358,13 @@ fun DateTimeSection(
                 Icon(
                     imageVector = Icons.Default.ArrowForward,
                     contentDescription = null,
-                    modifier = Modifier.padding(end = 4.dp)
+                    modifier = Modifier.size(24.dp) // Kích thước mũi tên hợp lý
                 )
 
-                Column (verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Text("Giờ kết thúc", style = MaterialTheme.typography.bodySmall)
                     TextButton(
                         onClick = { showEndTimePicker = true },
@@ -425,7 +438,7 @@ fun DateTimeSection(
             onDismissRequest = { showEndTimePicker = false },
             confirmButton = {
                 TextButton(onClick = {
-                    val newStartTime = LocalDateTime.of(
+                    val newEndTime = LocalDateTime.of(
                         date,
                         LocalTime.of(
                             endTimePickerState.hour,
@@ -433,7 +446,7 @@ fun DateTimeSection(
                         )
                     )
                     viewModel.updateEndTime(
-                        newStartTime
+                        newEndTime
                     )
                     showEndTimePicker = false
                 }) { Text("OK") }
@@ -552,7 +565,7 @@ fun ReminderSettingsBlock(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                Icons.Default.Notifications,
+                Icons.Default.NotificationsActive,
                 contentDescription = null,
 //                tint = Color(0xFF4CAF50),
                 modifier = Modifier.padding(end = 4.dp)
@@ -601,7 +614,7 @@ fun ReminderSettingsBlock(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            Icons.Default.AccountCircle,
+                            Icons.Default.AccessTime,
                             contentDescription = null,
 //                            tint = Color(0xFF4CAF50)
                         )

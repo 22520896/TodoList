@@ -33,6 +33,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import com.example.todolist.ui.home.todo.HorizontalCalendar
 import com.example.todolist.ui.home.todo.TodoScreen
 import com.example.todolist.ui.navbar.NavBar
@@ -41,26 +42,42 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.todolist.ui.home.note.NoteScreen
+import androidx.navigation.navArgument
+import com.example.todolist.data.entity.Note
+import com.example.todolist.note.ui.NoteScreen
+import com.example.todolist.ui.home.note.NoteEditScreen
 import com.example.todolist.ui.navbar.NavDes
 import com.example.todolist.viewmodel.CommonViewModel
+import com.example.todolist.viewmodel.NoteViewModel
 
-@Composable
-fun HomeScreen(navController: NavController, commonViewModel: CommonViewModel = hiltViewModel()){
-    val childNav = rememberNavController()
-    val color by commonViewModel.color.collectAsStateWithLifecycle()
-    Column  {
-        TopNavBar(navController = childNav, color = color)
-        NavHost(
-            navController = childNav,
-            startDestination = NavDes.TODO.route,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            composable(NavDes.TODO.route) { TodoScreen(commonViewModel= commonViewModel) }
-            composable(NavDes.NOTE.route) { NoteScreen() }
-        }
-    }
-}
+//@Composable
+//fun HomeScreen(navController: NavController, commonViewModel: CommonViewModel = hiltViewModel()){
+//    val childNav = rememberNavController()
+//    val noteViewModel: NoteViewModel = hiltViewModel()
+//    val color by commonViewModel.color.collectAsStateWithLifecycle()
+//    Column  {
+//        TopNavBar(navController = childNav, color = color)
+//        NavHost(
+//            navController = childNav,
+//            startDestination = NavDes.TODO.route,
+//            modifier = Modifier.fillMaxSize()
+//        ) {
+//            composable(NavDes.TODO.route) { TodoScreen(commonViewModel= commonViewModel) }
+//            composable(NavDes.NOTE.route) { NoteScreen(childNav) }
+//            composable(
+//                "${NavDes.NOTE_EDIT.route}/{id}",
+//                arguments = listOf(
+//                    navArgument("id") {
+//                        type = NavType.LongType
+//                    }
+//                )
+//            ) { backStackEntry ->
+//                val id = backStackEntry.arguments?.getLong("id")
+//                NoteEditScreen(navController = navController, viewModel = noteViewModel, noteId = id?:0)
+//            }
+//        }
+//    }
+//}
 
 
 // Điều hướng Todo/Note
@@ -73,7 +90,7 @@ fun TopNavBar(navController: NavController, color: String) {
     TopAppBar(
         backgroundColor = Color.White,
         elevation = 0.dp,
-        contentPadding = PaddingValues(top = 2.dp),
+        contentPadding = PaddingValues(top = 0.dp),
         modifier = Modifier.safeDrawingPadding()
     ) {
         Box(

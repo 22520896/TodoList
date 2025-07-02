@@ -9,6 +9,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
+import com.example.todolist.data.entity.Event
 import com.example.todolist.data.entity.Todo
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -304,3 +305,59 @@ object ReminderScheduler {
 //        alarmManager.cancel(pendingFocus)
 //    }
 //}
+
+
+
+
+object EventReminderScheduler {
+    @SuppressLint("ScheduleExactAlarm")
+    fun scheduleReminders(context: Context, event: Event) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+
+        event.reminderOffsets.forEachIndexed { index, offset ->
+            val triggerAtMillis = event.startTime
+                .atZone(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli() - offset
+
+            if (triggerAtMillis <= System.currentTimeMillis()) return@forEachIndexed
+
+            val intent = Intent(context, EventReminderReceiver::class.java).apply {
+                putExtra("eventId", event.id)
+                putExtra("title", event.title)
+                putExtra("startDate", event.startDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
+                putExtra("startTime", event.startTime.format(DateTimeFormatter.ofPattern("HH:mm")))
+                putExtra("endDate", event.endDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
+                putExtra("endTime", event.endTime.format(DateTimeFormatter.ofPattern("HH:mm")))
+            }
+
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                "${event.id}_reminder_$index".hashCode(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                triggerAtMillis,
+                pendingIntent
+            )
+        }
+    }
+
+    fun cancelReminders(context: Context, event: Event) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+
+        event.reminderOffsets.forEachIndexed { index, _ ->
+            val intent = Intent(context, EventReminderReceiver::class.java)
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                "${event.id}_reminder_$index".hashCode(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            alarmManager.cancel(pendingIntent)
+        }
+    }
+}

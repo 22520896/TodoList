@@ -20,15 +20,13 @@ class ReportRepository @Inject constructor(
         val todos = todoDao.getTodosByMonthOnce(monthStr)
         val total = todos.size
         val completed = todos.count { it.isDone }
-        val incompleted = todos.count { !it.isDone && it.startTime < LocalDateTime.now() }
-        val notStarted = todos.count { !it.isDone && it.startTime >= LocalDateTime.now() }
+        val incompleted = total - completed
 
         val report = Report(
             yearMonth = monthStr,
             total = total,
             completed = completed,
             incompleted = incompleted,
-            notStarted = notStarted
         )
         dao.insertOrUpdate(report)
     }

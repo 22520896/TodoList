@@ -10,12 +10,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ReportDao {
-
     @Query("SELECT * FROM reports WHERE yearMonth = :yearMonth LIMIT 1")
     fun getByMonth(yearMonth: String): Flow<Report?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdate(report: Report)
-
-
 }

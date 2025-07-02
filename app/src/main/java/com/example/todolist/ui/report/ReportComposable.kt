@@ -34,19 +34,19 @@ fun DonutChart(report: Report) {
     val total = report.total.coerceAtLeast(1) // tránh chia 0
     val completedPercent = report.completed * 100f / total
     val incompletedPercent = report.incompleted * 100f / total
-    val notStartedPercent = report.notStarted * 100f / total
+//    val notStartedPercent = report.notStarted * 100f / total
 
     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth()) {
         PieChart(
             values = listOf(
                 completedPercent,
                 incompletedPercent,
-                notStartedPercent
+//                notStartedPercent
             ),
             colors = listOf(
                 Color(0xFF4CAF50), // xanh
                 Color(0xFFFFC107), // vàng
-                Color(0xFFF06292)  // hồng
+//                Color(0xFFF06292)  // hồng
             ),
             size = 160.dp,
             thickness = 26.dp
@@ -66,7 +66,7 @@ fun DonutChart(report: Report) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Legend("Chưa bắt đầu", Color(0xFFF06292))
+//        Legend("Chưa bắt đầu", Color(0xFFF06292))
         Legend("Chưa hoàn thành", Color(0xFFFFC107))
         Legend("Hoàn thành", Color(0xFF4CAF50))
 
@@ -120,7 +120,7 @@ fun ReportCats(report: Report) {
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        CatStat(R.drawable.cat, report.notStarted, Color(0xFFF06292))
+//        CatStat(R.drawable.cat, report.notStarted, Color(0xFFF06292))
         CatStat(R.drawable.cat, report.incompleted, Color(0xFFFFC107))
         CatStat(R.drawable.cat, report.completed, Color(0xFF4CAF50))
     }

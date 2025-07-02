@@ -18,12 +18,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.MailOutline
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
@@ -106,7 +110,7 @@ fun SettingScreen(
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             item {
                 SettingItem(
-                    icon = Icons.Default.DateRange,
+                    icon = Icons.Default.CalendarMonth,
                     title = "Định dạng ngày",
                     value = dateFormat,
                     onClick = {
@@ -117,7 +121,7 @@ fun SettingScreen(
 
             item {
                 SettingItem(
-                    icon = Icons.Default.DateRange,
+                    icon = Icons.Default.AccessTime,
                     title = "Định dạng giờ",
                     value = if (timeFormat == "HH:mm") "24 giờ" else "12 giờ",
                     onClick = {
@@ -128,7 +132,7 @@ fun SettingScreen(
 
             item {
                 SettingItem(
-                    icon = Icons.Default.FavoriteBorder,
+                    icon = Icons.Default.ColorLens,
                     title = "Màu nền",
                     value = color,
                     isColor = true,
@@ -140,7 +144,7 @@ fun SettingScreen(
 
             item {
                 SettingItem(
-                    icon = Icons.Default.Email,
+                    icon = Icons.Default.MusicNote,
                     title = "Nhạc chuông",
                     value = ringtoneName,
                     onClick = {

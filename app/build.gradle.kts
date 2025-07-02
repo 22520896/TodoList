@@ -70,6 +70,9 @@ dependencies {
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation ("com.google.code.gson:gson:2.10.1")
     kapt ("com.google.dagger:hilt-android-compiler:2.56.2")
+
+    implementation(platform("androidx.compose:compose-bom:2024.05.00")) // hoặc phiên bản mới nhất
+    implementation("androidx.compose.material:material-icons-extended")
 }
 
 //plugins {

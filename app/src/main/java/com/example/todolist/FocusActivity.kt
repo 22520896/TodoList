@@ -28,77 +28,77 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-//@AndroidEntryPoint
-//class FocusActivity : ComponentActivity() {
-//    @Inject
-//    lateinit var todoRepository: TodoRepository
-//
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//
-//        val todoId = intent.getLongExtra("todoId", -1)
-//
-//        setContent {
-//            val todo by produceState<Todo?>(null) {
-//                value = todoRepository.getTodoById(todoId)
-//            }
-//
-//            todo?.let {
-//                FocusScreen(
-//                    todo = it,
-//                    onCompleted = { isCompleted ->
-//                        lifecycleScope.launch {
-//                            val updated = it.copy(isDone = isCompleted)
-//                            todoRepository.updateTodo(updated)
-//                        }
-//                    },
-//                    onExit = { finish() }
-//                )
-//            }
-//        }
-//    }
-//}
-
 @AndroidEntryPoint
 class FocusActivity : ComponentActivity() {
-
     @Inject
     lateinit var todoRepository: TodoRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val todoId = intent.getLongExtra("todoId", -1L)
-        Log.e("FocusActivity", "📌 Mở với todoId = $todoId")
-
-        if (todoId == -1L) {
-            Toast.makeText(this, "Không có todoId!", Toast.LENGTH_SHORT).show()
-            finish()
-            return
-        }
+        val todoId = intent.getLongExtra("todoId", -1)
 
         setContent {
-            var todo by remember { mutableStateOf<Todo?>(null) }
-
-            LaunchedEffect(Unit) {
-                val loaded = todoRepository.getTodoById(todoId)
-                Log.e("FocusActivity", "✅ Todo loaded: $loaded - todoId = $todoId")
-                todo = loaded
+            val todo by produceState<Todo?>(null) {
+                value = todoRepository.getTodoById(todoId)
             }
 
-            if (todo != null) {
-                FocusDebugView(todo!!)
-            } else {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Đang tải dữ liệu...", style = MaterialTheme.typography.bodyLarge)
-                }
+            todo?.let {
+                FocusScreen(
+                    todo = it,
+                    onCompleted = { isCompleted ->
+                        lifecycleScope.launch {
+                            val updated = it.copy(isDone = isCompleted)
+                            todoRepository.updateTodo(updated)
+                        }
+                    },
+                    onExit = { finish() }
+                )
             }
         }
     }
 }
+
+//@AndroidEntryPoint
+//class FocusActivity : ComponentActivity() {
+//
+//    @Inject
+//    lateinit var todoRepository: TodoRepository
+//
+//    override fun onCreate(savedInstanceState: Bundle?) {
+//        super.onCreate(savedInstanceState)
+//
+//        val todoId = intent.getLongExtra("todoId", -1L)
+//        Log.e("FocusActivity", "📌 Mở với todoId = $todoId")
+//
+//        if (todoId == -1L) {
+//            Toast.makeText(this, "Không có todoId!", Toast.LENGTH_SHORT).show()
+//            finish()
+//            return
+//        }
+//
+//        setContent {
+//            var todo by remember { mutableStateOf<Todo?>(null) }
+//
+//            LaunchedEffect(Unit) {
+//                val loaded = todoRepository.getTodoById(todoId)
+//                Log.e("FocusActivity", "✅ Todo loaded: $loaded - todoId = $todoId")
+//                todo = loaded
+//            }
+//
+//            if (todo != null) {
+//                FocusDebugView(todo!!)
+//            } else {
+//                Box(
+//                    modifier = Modifier.fillMaxSize(),
+//                    contentAlignment = Alignment.Center
+//                ) {
+//                    Text("Đang tải dữ liệu...", style = MaterialTheme.typography.bodyLarge)
+//                }
+//            }
+//        }
+//    }
+//}
 
 
 @Composable

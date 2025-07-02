@@ -1,17 +1,11 @@
 package com.example.todolist.ui.navbar
 
 import android.annotation.SuppressLint
-import android.graphics.drawable.shapes.Shape
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.material.FabPosition
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
@@ -30,11 +24,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
@@ -45,12 +37,12 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.todolist.ui.ChooseAdd
-import com.example.todolist.ui.calendar.EventModal
+import com.example.todolist.ui.event.EventModal
 import com.example.todolist.ui.todo.TodoModal
 import com.example.todolist.ui.todo.TodoModalViewModel
 import com.example.todolist.viewmodel.CommonViewModel
+import com.example.todolist.viewmodel.EventModalViewModel
 import com.example.todolist.viewmodel.NavBarViewModel
-import com.example.todolist.viewmodel.ReportViewModel
 import kotlinx.coroutines.launch
 
 @SuppressLint("StateFlowValueCalledInComposition")
@@ -62,7 +54,7 @@ fun NavBar(
     commonViewModel: CommonViewModel,
     content: @Composable (PaddingValues) -> Unit,
 ) {
-    val leftItems = listOf(NavDes.HOME, NavDes.CALENDAR)
+    val leftItems = listOf(NavDes.TODO, NavDes.CALENDAR)
     val rightItems = listOf(NavDes.REPORT, NavDes.SETTING)
 
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -72,17 +64,39 @@ fun NavBar(
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val todoModalViewModel: TodoModalViewModel = hiltViewModel()
+    val eventModalViewModel: EventModalViewModel = hiltViewModel()
     val color by commonViewModel.color.collectAsStateWithLifecycle()
 
+//    LaunchedEffect(Unit) {
+//        viewModel.event.collect { e ->
+//            when (e) {
+//                is NavBarViewModel.UiEvent.NavigateToNewNote -> navController.navigate(NavDes.NOTE_EDIT.route)
+//                else -> {
+//                    currentModal = e          // chỉ gán state
+//                    scope.launch {            // mở sheet trong coroutine con
+//                        sheetState.show()
+//                    }
+//                }
+//            }
+//        }
+//    }
     LaunchedEffect(Unit) {
         viewModel.event.collect { e ->
             when (e) {
-                is NavBarViewModel.UiEvent.NavigateToNewNote -> navController.navigate("new_note")
-                else -> {
-                    currentModal = e          // chỉ gán state
-                    scope.launch {            // mở sheet trong coroutine con
-                        sheetState.show()
+                is NavBarViewModel.UiEvent.NavigateToNewNote -> {
+                    navController.navigate(NavDes.NOTE_EDIT.route)
+                    {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
                     }
+                }
+
+                else -> {
+                    currentModal = e
+                    scope.launch { sheetState.show() }
                 }
             }
         }
@@ -104,7 +118,10 @@ fun NavBar(
                     todoModalViewModel.startAddTodo(commonViewModel.initDate.value)
                     TodoModal(viewModel = todoModalViewModel, commonViewModel = commonViewModel, onDismiss = { currentModal = null })
                 }
-                NavBarViewModel.UiEvent.ShowAddEventModal -> EventModal()
+                NavBarViewModel.UiEvent.ShowAddEventModal -> {
+                    eventModalViewModel.startAddEvent()
+                    EventModal(eventModalViewModel, commonViewModel, { currentModal = null })
+                }
                 NavBarViewModel.UiEvent.ShowChooseModal   -> ChooseAdd()
                 else -> {}    // NavigateToNewNote không rơi vào đây
             }
@@ -152,7 +169,7 @@ fun NavBar(
                                 style = TextStyle(fontSize = 11.sp)
                             )
                         },
-                        selected = currentRoute == item.route || (item.route == NavDes.HOME.route && (currentRoute == NavDes.TODO.route || currentRoute == NavDes.NOTE.route)),
+                        selected = currentRoute == (item.route) || (currentRoute?.startsWith("note") == true && item.route == NavDes.TODO.route),
                         selectedContentColor = bgColor,
                         unselectedContentColor = Color.Gray,
                         onClick = {

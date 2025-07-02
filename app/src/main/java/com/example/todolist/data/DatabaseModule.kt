@@ -5,6 +5,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.todolist.data.AppDatabase
+import com.example.todolist.data.dao.EventDao
+import com.example.todolist.data.dao.NoteDao
 import com.example.todolist.data.dao.ReportDao
 import com.example.todolist.data.dao.SettingDao
 import com.example.todolist.data.dao.TodoDao
@@ -44,14 +46,17 @@ object DatabaseModule {
             .build()
 
     @Provides
-    fun provideTodoDao(db: AppDatabase): TodoDao =
-        db.todoDao()
+    fun provideTodoDao(db: AppDatabase): TodoDao = db.todoDao()
 
     @Provides
-    fun provideSettingDao(db: AppDatabase): SettingDao =
-        db.settingDao()
+    fun provideSettingDao(db: AppDatabase): SettingDao = db.settingDao()
 
     @Provides
-    fun provideReportDao(db: AppDatabase): ReportDao =
-        db.reportDao()
+    fun provideReportDao(db: AppDatabase): ReportDao = db.reportDao()
+
+    @Provides
+    fun provideNoteDao(db: AppDatabase): NoteDao = db.noteDao()
+
+    @Provides
+    fun provideEventDao(db: AppDatabase): EventDao = db.eventDao()
 }

@@ -20,6 +20,7 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.rememberDismissState
 import androidx.compose.material3.AlertDialog
@@ -63,10 +64,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
-import java.time.temporal.WeekFields
-import java.util.Locale
-import kotlin.math.max
 import kotlin.math.roundToInt
 
 //@Composable
@@ -199,7 +196,7 @@ fun HorizontalCalendar(
         state = scrollState,
         modifier = modifier
             .fillMaxWidth()
-            .height(100.dp),
+            .height(80.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
     ) {
@@ -239,7 +236,7 @@ private fun DayItem(
             .border(1.dp, border, RoundedCornerShape(10.dp))
             .background(bg)
             .clickable(onClick = onClick)
-            .padding(vertical = 4.dp),
+            .padding(vertical = 0.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("Th${date.monthValue}", fontSize = 9.sp, color = text, fontWeight = FontWeight.Bold)
@@ -257,6 +254,7 @@ private fun DayItem(
 fun TodoItemCard(
     dateFormat: String,
     timeFormat: String,
+    color: String,
     todo: Todo,
     onCheckedChange: (Boolean) -> Unit,
     onClick: () -> Unit,
@@ -267,8 +265,7 @@ fun TodoItemCard(
     val formatterTime = DateTimeFormatter.ofPattern(timeFormat)
 
     val backgroundColor = if (todo.isHighPriority) Color(0xFFFFF3CD) else Color.White
-    val borderColor = Color.LightGray
-    val alpha = if (todo.isDone) 0.5f else 1f
+    val alpha = if (todo.isDone) 0.6f else 1f
 
     var showConfirmDialog by remember { mutableStateOf(false) }
 
@@ -288,7 +285,7 @@ fun TodoItemCard(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Transparent)
+                    .background(Color.White)
                     .padding(horizontal = 20.dp),
                 contentAlignment = Alignment.CenterEnd
             ) {
@@ -300,7 +297,7 @@ fun TodoItemCard(
                 modifier = modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp, vertical = 4.dp)
-                    .border(1.dp, borderColor, RoundedCornerShape(16.dp))
+                    .shadow(3.dp, RoundedCornerShape(18.dp))
                     .background(backgroundColor, RoundedCornerShape(16.dp))
                     .alpha(alpha)
                     .clickable { onClick() }
@@ -314,8 +311,9 @@ fun TodoItemCard(
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                         IconButton(onClick = { onCheckedChange(!todo.isDone) }) {
                             Icon(
-                                imageVector = if (todo.isDone) Icons.Filled.CheckCircle else Icons.Outlined.CheckCircle,
-                                contentDescription = "Hoàn thành"
+                                imageVector = if (todo.isDone) Icons.Default.CheckCircle else Icons.Outlined.Circle,
+                                contentDescription = "Hoàn thành",
+                                tint = if (todo.isDone) Color(android.graphics.Color.parseColor(color)) else Color.Gray // Đổi màu icon thành xanh khi hoàn thành
                             )
                         }
 
@@ -393,11 +391,11 @@ fun TodoItemCard(
                     Text(
                         "Xác nhận xóa",
                         fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleLarge
                     )
                 }
             },
-            text = { Text("Bạn có chắc chắn muốn xóa công việc này không?") }
+            text = { Text("Bạn có chắc chắn muốn xóa nhiệm vụ này không?") }
         )
     }
 }
@@ -417,9 +415,9 @@ fun OverviewCard(
         modifier = modifier
             .fillMaxWidth()
             .height(160.dp)
-            .clip(RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(20.dp))
             .background(Color.Transparent)
-            .padding(horizontal = 10.dp, vertical = 12.dp)
+            .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {
         Image(
             painter = painterResource(id = R.drawable.cat), // thay bằng ảnh bạn cung cấp
@@ -487,7 +485,7 @@ fun HorizontalWeekCalendar(
 
     LazyRow(
         state = scrollState,
-        modifier = modifier.height(100.dp),
+        modifier = modifier.height(80.dp),
         contentPadding = PaddingValues(horizontal = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -529,7 +527,7 @@ fun WeekItem(
             .border(1.dp, border, RoundedCornerShape(10.dp))
             .background(bg)
             .clickable(onClick = onClick)
-            .padding(vertical = 4.dp),
+            .padding(vertical = 0.dp),
             horizontalAlignment = Alignment.CenterHorizontally) {
 
         Text(
@@ -580,7 +578,7 @@ fun HorizontalMonthCalendar(
 
     LazyRow(
         state = scrollState,
-        modifier = modifier.height(100.dp),
+        modifier = modifier.height(80.dp),
         contentPadding = PaddingValues(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {

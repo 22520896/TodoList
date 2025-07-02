@@ -30,7 +30,6 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
-import com.example.todolist.ui.home.HomeScreen
 import com.example.todolist.ui.navbar.NavBar
 import com.example.todolist.ui.navbar.NavGraph
 import com.example.todolist.ui.theme.TodoListTheme
