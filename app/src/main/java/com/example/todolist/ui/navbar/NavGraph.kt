@@ -1,7 +1,10 @@
 package com.example.todolist.ui.navbar
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -21,8 +24,10 @@ import com.example.todolist.ui.home.todo.TodoScreen
 import com.example.todolist.ui.report.ReportScreen
 import com.example.todolist.ui.setting.SettingScreen
 import com.example.todolist.viewmodel.CommonViewModel
+import com.example.todolist.viewmodel.EventViewModel
 import com.example.todolist.viewmodel.NoteViewModel
 import com.example.todolist.viewmodel.ReportViewModel
+import com.example.todolist.viewmodel.TodoViewModel
 
 //@Composable
 //fun NavGraph(navController: NavHostController, commonViewModel: CommonViewModel) {
@@ -45,68 +50,99 @@ import com.example.todolist.viewmodel.ReportViewModel
 @Composable
 fun NavGraph(
     navController: NavHostController,
-    commonViewModel: CommonViewModel
+    commonViewModel: CommonViewModel,
+    paddingValues: PaddingValues,
+    modifier: Modifier = Modifier
 ) {
     val reportViewModel: ReportViewModel = hiltViewModel()
     val noteViewModel: NoteViewModel = hiltViewModel()
     val color by commonViewModel.color.collectAsStateWithLifecycle()
-
-    Column {
-        val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-        val isHomeRoute = currentRoute?.startsWith("home") == true
-
-        if (isHomeRoute) {
-            TopNavBar(navController = navController, color = color)
+    NavHost(
+        navController = navController,
+        startDestination = NavDes.TODO.route,
+        modifier = modifier.fillMaxSize()
+    ) {
+        composable(NavDes.TODO.route) {
+            val todoViewModel: TodoViewModel = hiltViewModel()
+            Scaffold(
+                topBar = {
+                    TopNavBar(
+                        navController = navController,
+                        color = color
+                    )
+                },
+                content = { innerPadding ->
+                    TodoScreen(
+                        commonViewModel = commonViewModel,
+                        viewModel = todoViewModel,
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .padding(paddingValues)
+                    )
+                }
+            )
         }
 
-        NavHost(
-            navController = navController,
-            startDestination = NavDes.TODO.route,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // ========== HOME + route con ==========
-            composable(NavDes.TODO.route) {
-                TodoScreen(commonViewModel = commonViewModel)
-            }
+        composable(NavDes.NOTE.route) {
+            Scaffold(
+                topBar = {
+                    TopNavBar(
+                        navController = navController,
+                        color = color
+                    )
+                },
+                content = { innerPadding ->
+                    NoteScreen(
+                        navController = navController,
+                        commonViewModel = commonViewModel,
+                        viewModel = noteViewModel,
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .padding(paddingValues)
+                    )
+                }
+            )
+        }
 
-            composable(NavDes.NOTE.route) {
-                NoteScreen(navController, commonViewModel = commonViewModel)
-            }
-            composable(NavDes.NOTE_EDIT.route) {
-                NoteEditScreen(
-                    navController = navController,
-                    viewModel = noteViewModel,
-                    noteId = null
-                )
-            }
+        composable(NavDes.NOTE_EDIT.route) {
+            NoteEditScreen(
+                navController = navController,
+                viewModel = noteViewModel,
+                commonViewModel = commonViewModel,
+                noteId = null,
+                modifier = Modifier.padding(paddingValues)
+            )
+        }
 
-            composable(
-                "${NavDes.NOTE_EDIT.route}/{id}",
-                arguments = listOf(
-                    navArgument("id") { type = NavType.LongType; defaultValue = 0 }
-                )
-            ) { backStackEntry ->
-                val id = backStackEntry.arguments?.getLong("id") ?: 0L
-                NoteEditScreen(
-                    navController = navController,
-                    viewModel = noteViewModel,
-                    noteId = id
-                )
-            }
+        composable(
+            "${NavDes.NOTE_EDIT.route}/{id}",
+            arguments = listOf(
+                navArgument("id") { type = NavType.LongType; defaultValue = 0 }
+            )
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getLong("id") ?: 0L
+            NoteEditScreen(
+                navController = navController,
+                viewModel = noteViewModel,
+                commonViewModel = commonViewModel,
+                noteId = id,
+                modifier = Modifier.padding(paddingValues)
+            )
+        }
 
-            composable(NavDes.CALENDAR.route) {
-                CalendarScreen(commonViewModel = commonViewModel)
-            }
+        composable(NavDes.CALENDAR.route) {
+            CalendarScreen(commonViewModel = commonViewModel, modifier = Modifier.padding(paddingValues))
+        }
 
-            composable(NavDes.REPORT.route) {
-                ReportScreen(reportViewModel, commonViewModel)
-            }
+        composable(NavDes.REPORT.route) {
+            ReportScreen(reportViewModel, commonViewModel)
+        }
 
-            composable(NavDes.SETTING.route) {
-                SettingScreen(commonViewModel)
-            }
+        composable(NavDes.SETTING.route) {
+            SettingScreen(commonViewModel)
         }
     }
 }
+
 
 

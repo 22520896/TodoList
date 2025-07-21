@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.sp
 fun CommonSwitch(color: String, isCheck: Boolean, onCheckedChange: (Boolean) -> Unit){
     Switch(checked = isCheck,
         onCheckedChange = onCheckedChange,
-        modifier = Modifier.scale(0.8f),
+        modifier = Modifier.scale(0.7f),
         colors = SwitchDefaults.colors(
             checkedThumbColor = Color.White,
             checkedTrackColor = Color(android.graphics.Color.parseColor(color)),

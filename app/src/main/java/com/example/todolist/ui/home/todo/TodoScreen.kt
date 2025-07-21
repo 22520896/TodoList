@@ -55,11 +55,13 @@ import java.time.temporal.IsoFields
 @Composable
 fun TodoScreen(
     viewModel: TodoViewModel = hiltViewModel(),
-    commonViewModel: CommonViewModel = hiltViewModel()
+    commonViewModel: CommonViewModel = hiltViewModel(),
+    modifier: Modifier
 ) {
     val selectedFilter by viewModel.selectedFilter.collectAsStateWithLifecycle()
 
     Scaffold(
+        modifier = modifier,
         topBar = {
             TodoTopNavBar(
                 selectedFilter = selectedFilter,

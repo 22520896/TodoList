@@ -30,7 +30,7 @@ fun ReportScreen(
     val color by commonViewModel.color.collectAsStateWithLifecycle()
 
     Column(
-        modifier = Modifier.padding(vertical = 8.dp),
+        modifier = Modifier.padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -54,7 +54,7 @@ fun ReportScreen(
             text = "Tổng quan",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = 25.dp)
         )
 
         report?.let {

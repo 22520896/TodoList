@@ -2,13 +2,16 @@ package com.example.todolist.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.todolist.data.entity.Event
 import com.example.todolist.data.entity.Todo
 import com.example.todolist.data.repository.TodoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.count
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -32,6 +35,8 @@ class TodoViewModel @Inject constructor(private val repository: TodoRepository):
 
     private val _todos = MutableStateFlow<List<Todo>>(emptyList())
     val todos = _todos.asStateFlow()
+//    val allEvents: StateFlow<List<Todo>> = repository.getTodosByDate(_selectedDate.value)
+//    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
 
     fun setFilter(filter: String) {

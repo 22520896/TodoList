@@ -67,28 +67,18 @@ fun NavBar(
     val eventModalViewModel: EventModalViewModel = hiltViewModel()
     val color by commonViewModel.color.collectAsStateWithLifecycle()
 
-//    LaunchedEffect(Unit) {
-//        viewModel.event.collect { e ->
-//            when (e) {
-//                is NavBarViewModel.UiEvent.NavigateToNewNote -> navController.navigate(NavDes.NOTE_EDIT.route)
-//                else -> {
-//                    currentModal = e          // chỉ gán state
-//                    scope.launch {            // mở sheet trong coroutine con
-//                        sheetState.show()
-//                    }
-//                }
-//            }
-//        }
-//    }
     LaunchedEffect(Unit) {
         viewModel.event.collect { e ->
             when (e) {
                 is NavBarViewModel.UiEvent.NavigateToNewNote -> {
                     navController.navigate(NavDes.NOTE_EDIT.route)
                     {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
-                        }
+//                        popUpTo(navController.graph.findStartDestination().id) {
+//                            saveState = true
+//                        }
+//                        launchSingleTop = true
+//                        restoreState = true
+                        popUpTo(NavDes.NOTE.route) { inclusive = false }
                         launchSingleTop = true
                         restoreState = true
                     }
@@ -122,7 +112,10 @@ fun NavBar(
                     eventModalViewModel.startAddEvent()
                     EventModal(eventModalViewModel, commonViewModel, { currentModal = null })
                 }
-                NavBarViewModel.UiEvent.ShowChooseModal   -> ChooseAdd()
+                NavBarViewModel.UiEvent.ShowChooseModal   -> {
+                    todoModalViewModel.startAddTodo(commonViewModel.initDate.value)
+                    TodoModal(viewModel = todoModalViewModel, commonViewModel = commonViewModel, onDismiss = { currentModal = null })
+                }
                 else -> {}    // NavigateToNewNote không rơi vào đây
             }
         }
@@ -169,7 +162,7 @@ fun NavBar(
                                 style = TextStyle(fontSize = 11.sp)
                             )
                         },
-                        selected = currentRoute == (item.route) || (currentRoute?.startsWith("note") == true && item.route == NavDes.TODO.route),
+                        selected = currentRoute == (item.route) || (currentRoute?.endsWith("note") == true && item.route == NavDes.TODO.route),
                         selectedContentColor = bgColor,
                         unselectedContentColor = Color.Gray,
                         onClick = {

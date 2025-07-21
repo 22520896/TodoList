@@ -296,9 +296,9 @@ fun TodoItemCard(
             Box(
                 modifier = modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                    .shadow(3.dp, RoundedCornerShape(18.dp))
-                    .background(backgroundColor, RoundedCornerShape(16.dp))
+                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                    .shadow(3.dp, RoundedCornerShape(16.dp))
+                    .background(backgroundColor, RoundedCornerShape(18.dp))
                     .alpha(alpha)
                     .clickable { onClick() }
                     .padding(12.dp)
@@ -435,9 +435,9 @@ fun OverviewCard(
                 verticalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.weight(1f).padding(start = 10.dp)
             ) {
-                Text("Tổng quan", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                Text(date, color = Color.White)
-                Text("$totalTasks nhiệm vụ", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = Color.White)
+                Text("Tổng quan", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(date, color = Color.White, fontSize = 12.sp)
+                Text("$totalTasks nhiệm vụ", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color.White)
             }
 
 

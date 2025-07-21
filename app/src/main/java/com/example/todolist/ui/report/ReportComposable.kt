@@ -62,7 +62,7 @@ fun DonutChart(report: Report) {
     Spacer((Modifier.height(8.dp)))
 
     Row(
-        modifier = Modifier.padding(top = 10.dp).fillMaxWidth(0.85f),
+        modifier = Modifier.padding(top = 10.dp).fillMaxWidth(0.6f),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -121,8 +121,8 @@ fun ReportCats(report: Report) {
         verticalAlignment = Alignment.CenterVertically
     ) {
 //        CatStat(R.drawable.cat, report.notStarted, Color(0xFFF06292))
-        CatStat(R.drawable.cat, report.incompleted, Color(0xFFFFC107))
-        CatStat(R.drawable.cat, report.completed, Color(0xFF4CAF50))
+        CatStat(R.drawable.img3, report.incompleted, Color(0xFFFFC107))
+        CatStat(R.drawable.img3, report.completed, Color(0xFF4CAF50))
     }
 }
 

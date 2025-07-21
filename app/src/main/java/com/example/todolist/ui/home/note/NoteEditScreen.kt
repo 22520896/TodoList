@@ -11,14 +11,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.todolist.viewmodel.CommonViewModel
 
 
 //@Composable
@@ -47,14 +51,18 @@ val noteIcons: List<NoteIconItem>
 fun NoteEditScreen(
     navController: NavController,
     viewModel: NoteViewModel,
-    noteId: Long?
+    commonViewModel: CommonViewModel,
+    noteId: Long?,
+    modifier: Modifier
 ) {
+    val color by commonViewModel.color.collectAsStateWithLifecycle()
     val notes by viewModel.allNotes.collectAsState(initial = emptyList())
     val noteToEdit = notes.find { it.id == noteId }
 
     val title by viewModel.title.collectAsState()
     val content by viewModel.content.collectAsState()
     var selectedIcon by remember { mutableStateOf<NoteIcon?>(null) }
+    var showErrorDialog by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(noteToEdit) {
         if (noteToEdit != null) {
@@ -67,16 +75,20 @@ fun NoteEditScreen(
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFA5D6A7)),
+            .background(Color(android.graphics.Color.parseColor(color))).then(modifier),
         containerColor = Color.Transparent,
         topBar = {
             NoteEditTopBar(
                 onCancel = { navController.popBackStack() },
                 onSave = {
-                    if (title.isNotBlank() || content.isNotBlank()) {
+                    if (title.isNotBlank() || content.isNotEmpty()) {
                         viewModel.saveNote()
+                        navController.popBackStack()
                     }
-                    navController.popBackStack()
+                    else{
+                        showErrorDialog = true
+                    }
+
                 }
             )
         }
@@ -97,6 +109,19 @@ fun NoteEditScreen(
             }
         )
     }
+
+    if (showErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showErrorDialog = false },
+            confirmButton = {
+                TextButton(onClick = { showErrorDialog = false }) {
+                    androidx.compose.material3.Text("OK")
+                }
+            },
+            title = { Text("Lỗi") },
+            text = { Text("Không được để trống cả Tiêu đề và Chi tiết", color = Color.Black) }
+        )
+    }
 }
 
 @Composable
@@ -115,7 +140,10 @@ fun NoteEditTopBar(
         IconButton(onClick = onCancel) {
             Icon(Icons.Default.Close, contentDescription = "Cancel")
         }
-        IconButton(onClick = onSave) {
+        Text(text = "Ghi chú",
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.Bold), color = Color.Black)
+        IconButton (onClick = onSave) {
             Icon(Icons.Default.Check, contentDescription = "Save")
         }
     }
@@ -139,7 +167,7 @@ fun NoteEditContent(
             onChange = onContentChange,
             modifier = Modifier.weight(1f)
         )
-        NoteToolbar(selectedIcon, onIconClick)
+//        NoteToolbar(selectedIcon, onIconClick)
     }
 }
 
@@ -148,15 +176,24 @@ fun NoteTitleField(value: String, onChange: (String) -> Unit) {
     TextField(
         value = value,
         onValueChange = onChange,
-        placeholder = { Text("Tiêu đề", color = Color.Gray) },
-        modifier = Modifier.fillMaxWidth(),
+        placeholder = {
+            Text(
+                "Tiêu đề",
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                color = Color.Gray
+            )
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(3.dp, RoundedCornerShape(18.dp))
+            .background(Color.White, RoundedCornerShape(16.dp)), // Nền trắng
         shape = RoundedCornerShape(12.dp),
         textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 22.sp),
         colors = TextFieldDefaults.colors(
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
-            focusedContainerColor = Color(0xFFE8F5E9),
-            unfocusedContainerColor = Color(0xFFE8F5E9),
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White,
             focusedTextColor = Color.Black
         )
     )
@@ -173,19 +210,20 @@ fun NoteContentField(
         onValueChange = onChange,
         placeholder = { Text("Chi tiết", color = Color.Gray) },
         modifier = modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .shadow(3.dp, RoundedCornerShape(18.dp)) // Bóng nhẹ giống TodoItemCard
+            .background(Color.White, RoundedCornerShape(16.dp)), // Nền trắng
         maxLines = Int.MAX_VALUE,
         shape = RoundedCornerShape(12.dp),
         colors = TextFieldDefaults.colors(
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
-            focusedContainerColor = Color(0xFFE8F5E9),
-            unfocusedContainerColor = Color(0xFFE8F5E9),
+            focusedContainerColor = Color.White, // Nền trắng khi focus
+            unfocusedContainerColor = Color.White, // Nền trắng khi không focus
             focusedTextColor = Color.Black
         )
     )
 }
-
 
 @Composable
 fun NoteToolbar(
@@ -193,7 +231,11 @@ fun NoteToolbar(
     onIconClick: (NoteIcon) -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(3.dp, RoundedCornerShape(18.dp)) // Bóng nhẹ giống TodoItemCard
+            .background(Color.White, RoundedCornerShape(16.dp)) // Nền trắng
+            .padding(8.dp), // Thêm padding để nội dung không sát mép
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         noteIcons.forEach { item ->

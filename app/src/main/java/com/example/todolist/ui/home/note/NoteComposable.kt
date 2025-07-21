@@ -78,7 +78,7 @@ fun NoteCardPreview(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .padding(horizontal = 8.dp, vertical = 2.dp)
             .shadow(3.dp, RoundedCornerShape(16.dp))
             .background(Color.White, RoundedCornerShape(18.dp))
             .clickable { onClick() }

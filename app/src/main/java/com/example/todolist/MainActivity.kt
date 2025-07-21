@@ -126,8 +126,8 @@ class MainActivity : ComponentActivity() {
                         Text("Loading...")
                     }
                 } else {
-                    NavBar(navController = navController, commonViewModel = commonViewModel) { _ ->
-                        NavGraph(navController, commonViewModel)
+                    NavBar(navController = navController, commonViewModel = commonViewModel) { innerPadding ->
+                        NavGraph(navController, commonViewModel, innerPadding)
                     }
                 }
             }

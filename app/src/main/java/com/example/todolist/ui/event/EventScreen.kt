@@ -3,7 +3,10 @@ package com.example.todolist.ui.event
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
-
+import androidx.compose.material.DismissDirection
+import androidx.compose.material.DismissValue
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.SwipeToDismiss
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.foundation.background
@@ -33,11 +36,17 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.rememberDismissState
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.todolist.data.entity.Event
 import com.example.todolist.ui.todo.TodoModalViewModel
 import com.example.todolist.viewmodel.CommonViewModel
@@ -50,130 +59,145 @@ import kotlinx.coroutines.launch
 fun CalendarScreen(
     eventViewModel: EventViewModel = hiltViewModel(),
     commonViewModel: CommonViewModel,
+    modifier: Modifier
 ) {
     val currentMonth: YearMonth = YearMonth.now()
     val events by eventViewModel.allEvents.collectAsState(initial = emptyList())
+    val dateFormat by commonViewModel.dateFormat.collectAsStateWithLifecycle()
+    val timeFormat by commonViewModel.timeFormat.collectAsStateWithLifecycle()
+    val color by commonViewModel.color.collectAsStateWithLifecycle()
     val eventModalViewModel: EventModalViewModel = hiltViewModel()
     var month by remember { mutableStateOf(currentMonth) }
     val today = LocalDate.now()
     var showModalBottomSheet by remember { mutableStateOf(false) }
-
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val firstDayOfMonth = month.atDay(1)
     val daysInMonth = month.lengthOfMonth()
     val firstDayOfWeek = firstDayOfMonth.dayOfWeek.value % 7
     val totalCells = ((firstDayOfWeek + daysInMonth + 6) / 7) * 7
-
+    val scope = rememberCoroutineScope()
     val eventsInCurrentMonth = events.filter {
         it.startDate.year == month.year && it.startDate.month == month.month
     }
-    LazyColumn(
+
+    Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White).then(modifier)// Đặt nền trắng cho toàn bộ màn hình
     ) {
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF388E3C))
-                    .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                IconButton(onClick = { month = month.minusMonths(1) }) {
-                    Icon(
-                        Icons.Default.ArrowBack,
-                        contentDescription = "Previous",
-                        tint = Color.White
-                    )
-                }
-
-                Text(
-                    text = month.format(
-                        DateTimeFormatter.ofPattern(
-                            "MMMM yyyy",
-                            Locale.getDefault()
-                        )
-                    ),
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+        // Phần tiêu đề tháng/năm (cố định)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(android.graphics.Color.parseColor(color)))
+                .padding(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            IconButton(onClick = { month = month.minusMonths(1) }) {
+                Icon(
+                    Icons.Default.ArrowBack,
+                    contentDescription = "Previous",
+                    tint = Color.White
                 )
-
-                IconButton(onClick = { month = month.plusMonths(1) }) {
-                    Icon(
-                        Icons.Default.ArrowForward,
-                        contentDescription = "Next",
-                        tint = Color.White
-                    )
-                }
             }
-            Spacer(Modifier.height(8.dp))
-        }
 
-        item {
-            Row(modifier = Modifier.fillMaxWidth()) {
-                listOf("S", "M", "T", "W", "T", "F", "S").forEach {
-                    Text(
-                        text = it,
-                        modifier = Modifier.weight(1f),
-                        textAlign = TextAlign.Center,
-                        fontWeight = FontWeight.SemiBold
+            Text(
+                text = month.format(
+                    DateTimeFormatter.ofPattern(
+                        "MMMM yyyy",
+                        Locale.getDefault()
                     )
-                }
+                ),
+                color = Color.White, // Sử dụng màu từ commonViewModel
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+            )
+
+            IconButton(onClick = { month = month.plusMonths(1) }) {
+                Icon(
+                    Icons.Default.ArrowForward,
+                    contentDescription = "Next",
+                    tint = Color.White
+                )
             }
-            Spacer(Modifier.height(4.dp))
         }
+        Spacer(Modifier.height(6.dp))
+        // Phần ngày trong tuần (cố định)
+        Row(modifier = Modifier.fillMaxWidth()) {
+            listOf("S", "M", "T", "W", "T", "F", "S").forEach {
+                Text(
+                    text = it,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+        Spacer(Modifier.height(3.dp))
 
-        items(totalCells / 7) { week ->
-            Row(modifier = Modifier.fillMaxWidth()) {
-                for (day in 0..6) {
-                    val cellIndex = week * 7 + day
-                    val date =
-                        if (cellIndex >= firstDayOfWeek && cellIndex < firstDayOfWeek + daysInMonth) {
-                            month.atDay(cellIndex - firstDayOfWeek + 1)
-                        } else null
+        // Lưới ngày (cố định)
+        Column {
+            for (week in 0 until totalCells / 7) {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    for (day in 0..6) {
+                        val cellIndex = week * 7 + day
+                        val date =
+                            if (cellIndex >= firstDayOfWeek && cellIndex < firstDayOfWeek + daysInMonth) {
+                                month.atDay(cellIndex - firstDayOfWeek + 1)
+                            } else null
 
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .aspectRatio(1f),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CalendarDayCellModern(
-                            date = date,
-                            today = today,
-                            hasEvent = date != null && events.any {
-                                it.startDate <= date && it.endDate >= date
-                            }
-                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .aspectRatio(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CalendarDayCellModern(
+                                date = date,
+                                today = today,
+                                color = color,
+                                hasEvent = date != null && events.any {
+                                    it.startDate <= date && it.endDate >= date
+                                }
+                            )
+                        }
                     }
                 }
             }
         }
 
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Sự kiện trong tháng",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-        }
+        // Tiêu đề sự kiện (cố định)
+        Spacer(modifier = Modifier.height(13.dp))
+        Text(
+            text = "Sự kiện trong tháng",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(horizontal = 16.dp),
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(modifier = Modifier.height(5.dp))
 
-        items(eventsInCurrentMonth) { event ->
-            EventItemWithSwipe(
-                event = event,
-                onDelete = { eventViewModel.deleteEvent(event) },
-                onClick = {
-                    eventModalViewModel.startEditEvent(event)
-                    showModalBottomSheet = true
-                }
-            )
+        // Danh sách sự kiện (cuộn được)
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            items(eventsInCurrentMonth) { event ->
+                EventItemWithSwipe(
+                    dateFormat = dateFormat,
+                    timeFormat = timeFormat,
+                    event = event,
+                    onClick = {
+                        eventModalViewModel.startEditEvent(event)
+                        showModalBottomSheet = true
+                        scope.launch { sheetState.show() }
+                    },
+                    onDeleteConfirmed = {
+                        eventViewModel.deleteEvent(event)
+                    }
+                )
+            }
         }
     }
 
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true
-    )
 
     if (showModalBottomSheet) {
         ModalBottomSheet(
@@ -196,6 +220,7 @@ fun CalendarScreen(
 fun CalendarDayCellModern(
     date: LocalDate?,
     today: LocalDate = LocalDate.now(),
+    color: String,
     hasEvent: Boolean
 ) {
     if (date != null) {
@@ -210,7 +235,7 @@ fun CalendarDayCellModern(
                     .size(36.dp)
                     .clip(CircleShape)
                     .background(
-                        color = if (isToday) Color(0xFF388E3C) else Color.Transparent,
+                        color = if (isToday) Color(android.graphics.Color.parseColor(color)) else Color.Transparent,
                         shape = CircleShape
                     ),
                 contentAlignment = Alignment.Center
@@ -258,74 +283,218 @@ fun EventCard(event: Event, onClick: () -> Unit = {}) {
 }
 
 
+//@Composable
+//fun EventItemWithSwipe(
+//    event: Event,
+//    onDelete: () -> Unit,
+//    onClick: () -> Unit
+//) {
+//    val offsetX = remember { Animatable(0f, Float.VectorConverter) }
+//    val scope = rememberCoroutineScope()
+//    var showDelete by remember { mutableStateOf(false) }
+//
+//    val maxSwipe = with(LocalDensity.current) { 80.dp.toPx() }
+//
+//    Box(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .padding(horizontal = 16.dp, vertical = 4.dp) // SAME padding with EventCard
+//            .background(Color.Transparent)
+//            .clip(RoundedCornerShape(12.dp)) // SAME corner radius
+//            .pointerInput(Unit) {
+//                detectHorizontalDragGestures(
+//                    onDragEnd = {
+//                        scope.launch {
+//                            if (offsetX.value < -maxSwipe / 2) {
+//                                offsetX.animateTo(-maxSwipe)
+//                                showDelete = true
+//                            } else {
+//                                offsetX.animateTo(0f)
+//                                showDelete = false
+//                            }
+//                        }
+//                    },
+//                    onHorizontalDrag = { _, dragAmount ->
+//                        val newOffset = offsetX.value + dragAmount
+//                        if (newOffset <= 0f) {
+//                            scope.launch {
+//                                offsetX.snapTo(newOffset.coerceAtLeast(-maxSwipe))
+//                            }
+//                        }
+//                    }
+//                )
+//            }
+//    ) {
+//        // Nền đỏ và icon thùng rác
+//        Box(
+//            modifier = Modifier
+//                .matchParentSize()
+//                .clip(RoundedCornerShape(12.dp))
+//                .background(Color.Red),
+//            contentAlignment = Alignment.CenterEnd
+//        ) {
+//            if (showDelete) {
+//                IconButton(onClick = {
+//                    onDelete()
+//                    scope.launch {
+//                        offsetX.snapTo(0f)
+//                        showDelete = false
+//                    }
+//                }) {
+//                    Icon(Icons.Default.Delete, contentDescription = "Xoá", tint = Color.White)
+//                }
+//            }
+//        }
+//
+//        // Thẻ sự kiện
+//        Box(
+//            modifier = Modifier.offset { IntOffset(offsetX.value.toInt(), 0) }
+//        ) {
+//            EventCard(event = event, onClick = onClick)
+//        }
+//    }
+//}
+
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun EventItemWithSwipe(
     event: Event,
-    onDelete: () -> Unit,
-    onClick: () -> Unit
+    dateFormat: String,
+    timeFormat: String,
+    onClick: () -> Unit,
+    onDeleteConfirmed: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val offsetX = remember { Animatable(0f, Float.VectorConverter) }
-    val scope = rememberCoroutineScope()
-    var showDelete by remember { mutableStateOf(false) }
+    val formatterDate = DateTimeFormatter.ofPattern(dateFormat)
+    val formatterTime = DateTimeFormatter.ofPattern(timeFormat)
 
-    val maxSwipe = with(LocalDensity.current) { 80.dp.toPx() }
+    var showConfirmDialog by remember { mutableStateOf(false) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp) // SAME padding with EventCard
-            .background(Color.Transparent)
-            .clip(RoundedCornerShape(12.dp)) // SAME corner radius
-            .pointerInput(Unit) {
-                detectHorizontalDragGestures(
-                    onDragEnd = {
-                        scope.launch {
-                            if (offsetX.value < -maxSwipe / 2) {
-                                offsetX.animateTo(-maxSwipe)
-                                showDelete = true
-                            } else {
-                                offsetX.animateTo(0f)
-                                showDelete = false
-                            }
-                        }
-                    },
-                    onHorizontalDrag = { _, dragAmount ->
-                        val newOffset = offsetX.value + dragAmount
-                        if (newOffset <= 0f) {
-                            scope.launch {
-                                offsetX.snapTo(newOffset.coerceAtLeast(-maxSwipe))
-                            }
-                        }
-                    }
-                )
+    val dismissState = rememberDismissState(
+        confirmStateChange = {
+            if (it == DismissValue.DismissedToStart) {
+                showConfirmDialog = true
+                false
+            } else true
+        }
+    )
+
+    SwipeToDismiss(
+        state = dismissState,
+        directions = setOf(DismissDirection.EndToStart),
+        background = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Transparent)
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(Icons.Default.Delete, contentDescription = "Xóa", tint = Color.Red)
             }
-    ) {
-        // Nền đỏ và icon thùng rác
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.Red),
-            contentAlignment = Alignment.CenterEnd
-        ) {
-            if (showDelete) {
-                IconButton(onClick = {
-                    onDelete()
-                    scope.launch {
-                        offsetX.snapTo(0f)
-                        showDelete = false
+        },
+        dismissContent = {
+            Box(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                    .shadow(3.dp, RoundedCornerShape(18.dp))
+                    .background(Color.White, RoundedCornerShape(16.dp))
+                    .clickable { onClick() }
+                    .padding(12.dp)
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(
+                            modifier = Modifier
+                        ) {
+                            Text(
+                                text = event.title,
+                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = event.detail,
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        Column(
+                            modifier = Modifier
+                                .weight(1f) // Đảm bảo đủ không gian cho ngày tháng
+                                .padding(start = 8.dp),
+                            horizontalAlignment = Alignment.End,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "${event.startTime.format(formatterTime)} - ${event.startDate.format(formatterDate)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                textAlign = TextAlign.End
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .wrapContentWidth()
+                                        .padding(end = 43.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDownward,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = Color.Gray
+                                    )
+                                }
+                            }
+
+                            Text(
+                                text = "${event.endTime.format(formatterTime)} - ${event.endDate.format(formatterDate)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                textAlign = TextAlign.End
+                            )
+                        }
                     }
-                }) {
-                    Icon(Icons.Default.Delete, contentDescription = "Xoá", tint = Color.White)
                 }
             }
         }
+    )
 
-        // Thẻ sự kiện
-        Box(
-            modifier = Modifier.offset { IntOffset(offsetX.value.toInt(), 0) }
-        ) {
-            EventCard(event = event, onClick = onClick)
-        }
+    // Dialog xác nhận xóa
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    showConfirmDialog = false
+                    onDeleteConfirmed()
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showConfirmDialog = false
+                }) { Text("Hủy") }
+            },
+            title = {
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Text(
+                        "Xác nhận xóa",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                }
+            },
+            text = { Text("Bạn có chắc chắn muốn xóa sự kiện này không?") }
+        )
     }
 }

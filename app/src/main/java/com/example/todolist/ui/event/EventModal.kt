@@ -1,5 +1,6 @@
 package com.example.todolist.ui.event
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,8 +16,10 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -111,14 +114,24 @@ fun EventModal(
             viewModel = viewModel,
             timeFormat = timeFormat
         )
-
-        ReminderSettingsBlock(
-            color = color,
-            isEnabled = isReminderEnabled,
-            onEnabledChange = { viewModel.toggleReminderEnabled() },
-            reminderOffsets = reminderOffsets,
-            onOffsetsChange = { viewModel.updateReminderOffsets(it) }
-        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 3.dp)
+                .shadow(4.dp, RoundedCornerShape(12.dp)) // Bóng nhẹ
+                .background(Color.White, RoundedCornerShape(12.dp)) // Nền trắng
+                .padding(12.dp)
+        ){
+            Column {
+                ReminderSettingsBlock(
+                    color = color,
+                    isEnabled = isReminderEnabled,
+                    onEnabledChange = { viewModel.toggleReminderEnabled() },
+                    reminderOffsets = reminderOffsets,
+                    onOffsetsChange = { viewModel.updateReminderOffsets(it) }
+                )
+            }
+        }
     }
 
     if (errorMessage != null) {
@@ -179,7 +192,8 @@ fun DateTimeSection(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 12.dp)
-            .border(1.dp, Color.Black, RoundedCornerShape(12.dp))
+            .shadow(3.dp, RoundedCornerShape(12.dp)) // Bóng nhẹ
+            .background(Color.White, RoundedCornerShape(12.dp)) // Nền trắng
             .padding(12.dp)
     ) {
         Column (verticalArrangement = Arrangement.Center){
@@ -196,22 +210,26 @@ fun DateTimeSection(
 
             Spacer(Modifier.height(8.dp))
 
-            // Giờ bắt đầu & kết thúc
+            // Bắt đầu & kết thúc
             Row(
                 modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column (verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally){
+                Column (verticalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.weight(1f) // Cột thời gian kết thúc bằng cột bắt đầu
+                        .defaultMinSize(minWidth = 120.dp),)
+                {
                     Text("Bắt đầu", style = MaterialTheme.typography.bodySmall)
 
-                    Box(contentAlignment = Alignment.Center) {
-                        TextButton(
-                            onClick = { showStartDatePicker = true },
-                        ) {
-                            val dateText = "${startDate.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale("vi", "VN")).replaceFirstChar { it.uppercase() }}, ${startDate.dayOfMonth} tháng ${startDate.monthValue} năm ${startDate.year}"
-                            Text(dateText, fontSize = 16.sp)
-                        }
+                    TextButton(
+                        onClick = { showStartDatePicker = true },
+                    ) {
+                        val dateText = "${startDate.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale("vi", "VN")).replaceFirstChar { it.uppercase() }}, ${startDate.dayOfMonth} tháng ${startDate.monthValue} năm ${startDate.year}"
+                        Text(dateText, fontSize = 16.sp, textAlign = TextAlign.Center)
                     }
+
                     TextButton(
                         onClick = { showStartTimePicker = true },
                         contentPadding = PaddingValues(0.dp)
@@ -219,26 +237,34 @@ fun DateTimeSection(
                         Text(startTime.format(timeFormatter), fontSize = 16.sp)
                     }
                 }
+                Box(
+                    modifier = Modifier
+                        .wrapContentWidth() // Cột mũi tên nhỏ hơn
+                        .padding(horizontal = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowForward,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = Color.Gray
+                    )
+                }
 
-                Icon(
-                    imageVector = Icons.Default.ArrowForward,
-                    contentDescription = null,
-                    modifier = Modifier.padding(end = 4.dp)
-                )
-
-                Column (verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                Column (verticalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.weight(1f)
+                        .defaultMinSize(minWidth = 120.dp)) {
                     Text("Kết thúc", style = MaterialTheme.typography.bodySmall)
-                    Box(contentAlignment = Alignment.Center) {
-                        TextButton(
-                            onClick = { showEndDatePicker = true },
-                        ) {
-                            val dateText = "${startDate.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale("vi", "VN")).replaceFirstChar { it.uppercase() }}, ${endDate.dayOfMonth} tháng ${endDate.monthValue} năm ${endDate.year}"
-                            Text(dateText, fontSize = 16.sp)
-                        }
+                    TextButton(
+                        onClick = { showEndDatePicker = true },
+                    ) {
+                        val dateText = "${endDate.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale("vi", "VN")).replaceFirstChar { it.uppercase() }}, ${endDate.dayOfMonth} tháng ${endDate.monthValue} năm ${endDate.year}"
+                        Text(dateText, fontSize = 16.sp, textAlign = TextAlign.Center)
                     }
                     TextButton(
                         onClick = { showEndTimePicker = true },
-                        contentPadding = PaddingValues(0.dp)
+                        contentPadding = PaddingValues(0.dp),
                     ) {
                         Text(endTime.format(timeFormatter), fontSize = 16.sp)
                     }
@@ -258,6 +284,9 @@ fun DateTimeSection(
                             .atZone(ZoneId.systemDefault())
                             .toLocalDate()
                         viewModel.updateStartDate(newDate)
+                        viewModel.updateStartTime(
+                            LocalDateTime.of(newDate, startTime.toLocalTime())
+                        )
                     }
                     showStartDatePicker = false
                 }) { Text("OK") }
@@ -281,6 +310,9 @@ fun DateTimeSection(
                             .atZone(ZoneId.systemDefault())
                             .toLocalDate()
                         viewModel.updateEndDate(newDate)
+                        viewModel.updateEndTime(
+                            LocalDateTime.of(newDate, endTime.toLocalTime())
+                        )
                     }
                     showEndDatePicker = false
                 }) { Text("OK") }

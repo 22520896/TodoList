@@ -41,34 +41,40 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun NoteScreen(navController: NavController, viewModel: NoteViewModel = hiltViewModel(), commonViewModel: CommonViewModel) {
+fun NoteScreen(navController: NavController, viewModel: NoteViewModel = hiltViewModel(), commonViewModel: CommonViewModel, modifier: Modifier) {
     val dateFormat by commonViewModel.dateFormat.collectAsStateWithLifecycle()
     val color by commonViewModel.color.collectAsStateWithLifecycle()
     val notes by viewModel.allNotes.collectAsState(initial = emptyList())
-    LazyColumn {
-        items(notes) { note ->
-            NoteItemWithSwipe(
-                note = note,
-                onDelete = { viewModel.delete(note) },
-                onFavouriteChange =  {checked ->
+    Box(modifier = Modifier.background(Color.White).fillMaxSize().                                                                    then(modifier)){
+        LazyColumn (){
+            items(notes) { note ->
+                NoteItemWithSwipe(
+                    note = note,
+                    onDelete = { viewModel.delete(note) },
+                    onFavouriteChange =  {checked ->
                         viewModel.updateNote(note.copy(isFavourite = checked))},
-                dateFormat = dateFormat,
-                color = color,
-                onClick = {
-                    viewModel.startEditNote(note)
-                    navController.navigate("${NavDes.NOTE_EDIT.route}/${note.id}")
-                    {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
+                    dateFormat = dateFormat,
+                    color = color,
+                    onClick = {
+                        viewModel.startEditNote(note)
+                        navController.navigate("${NavDes.NOTE_EDIT.route}/${note.id}")
+                        {
+//                            popUpTo(navController.graph.findStartDestination().id) {
+//                                saveState = true
+//                            }
+//                            launchSingleTop = true
+//                            restoreState = true
+                            popUpTo(NavDes.NOTE.route) { inclusive = false }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
                     }
-                }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
         }
     }
+
 }
 
 

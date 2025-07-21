@@ -3,6 +3,7 @@ package com.example.todolist.ui.setting
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,9 +15,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.AccountCircle
@@ -28,6 +31,8 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
@@ -48,6 +53,7 @@ import androidx.navigation.NavController
 import com.example.todolist.viewmodel.CommonViewModel
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
@@ -89,15 +95,30 @@ fun SettingScreen(
                 .padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
         )
 
-        // Ảnh
-        Image(
-            painter = painterResource(id = R.drawable.cat),
-            contentDescription = null,
+//        // Ảnh
+//        Image(
+//            painter = painterResource(id = R.drawable.cat),
+//            contentDescription = null,
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .height(160.dp),
+//            contentScale = ContentScale.Crop
+//        )
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(160.dp),
-            contentScale = ContentScale.Crop
-        )
+                .height(160.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color.Transparent)
+                .padding(horizontal = 10.dp, vertical = 4.dp)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.cat), // thay bằng ảnh bạn cung cấp
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(24.dp))
+            )
+        }
 
         if (dateFormat == "") {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -107,50 +128,72 @@ fun SettingScreen(
         }
 
         // Danh sách cài đặt
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            item {
-                SettingItem(
-                    icon = Icons.Default.CalendarMonth,
-                    title = "Định dạng ngày",
-                    value = dateFormat,
-                    onClick = {
-                        showDateFormatDialog = true
-                    }
-                )
-            }
+        Box(
+            modifier = Modifier
+                .wrapContentSize() // Chiếm đúng kích cỡ nội dung
+                .padding(horizontal = 10.dp, vertical = 6.dp)
+                .fillMaxWidth()
+                .shadow(3.dp, RoundedCornerShape(18.dp)) // Bóng nhẹ giống TodoItemCard
+                .background(Color.White, RoundedCornerShape(16.dp)) // Nền trắng
+                .padding(6.dp)
+        ){
+            Column(
+                modifier = Modifier.fillMaxWidth(), // Column chiếm toàn chiều rộng để căn chỉnh
+                verticalArrangement = Arrangement.spacedBy(2.dp) // Khoảng cách giữa các mục
+            ) {
+                    SettingItem(
+                        icon = Icons.Default.CalendarMonth,
+                        title = "Định dạng ngày",
+                        value = dateFormat,
+                        onClick = {
+                            showDateFormatDialog = true
+                        }
+                    )
 
-            item {
-                SettingItem(
-                    icon = Icons.Default.AccessTime,
-                    title = "Định dạng giờ",
-                    value = if (timeFormat == "HH:mm") "24 giờ" else "12 giờ",
-                    onClick = {
-                        showTimeFormatDialog = true
-                    }
+                Divider(
+                    color = Color.Gray.copy(alpha = 0.2f),
+                    thickness = 1.dp,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                 )
-            }
 
-            item {
-                SettingItem(
-                    icon = Icons.Default.ColorLens,
-                    title = "Màu nền",
-                    value = color,
-                    isColor = true,
-                    onClick = {
-                        showColorDialog = true
-                    }
+                    SettingItem(
+                        icon = Icons.Default.AccessTime,
+                        title = "Định dạng giờ",
+                        value = if (timeFormat == "HH:mm") "24 giờ" else "12 giờ",
+                        onClick = {
+                            showTimeFormatDialog = true
+                        }
+                    )
+                Divider(
+                    color = Color.Gray.copy(alpha = 0.2f),
+                    thickness = 1.dp,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                 )
-            }
 
-            item {
-                SettingItem(
-                    icon = Icons.Default.MusicNote,
-                    title = "Nhạc chuông",
-                    value = ringtoneName,
-                    onClick = {
-                        showRingtoneDialog = true
-                    },
+                    SettingItem(
+                        icon = Icons.Default.ColorLens,
+                        title = "Màu nền",
+                        value = color,
+                        isColor = true,
+                        onClick = {
+                            showColorDialog = true
+                        }
+                    )
+
+                Divider(
+                    color = Color.Gray.copy(alpha = 0.2f),
+                    thickness = 1.dp,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                 )
+
+                    SettingItem(
+                        icon = Icons.Default.MusicNote,
+                        title = "Nhạc chuông",
+                        value = ringtoneName,
+                        onClick = {
+                            showRingtoneDialog = true
+                        },
+                    )
             }
         }
 
