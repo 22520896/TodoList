@@ -27,7 +27,6 @@ A personal task management application built with **Kotlin**, using **Jetpack Co
 ---
 
 ## 📱 Screens
-<div align="center">
 
 <div style="max-height: 500px; overflow-y: auto;">
   <table style="width:100%; text-align: center; border-collapse: collapse;">
