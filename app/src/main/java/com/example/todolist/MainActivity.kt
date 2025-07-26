@@ -34,76 +34,12 @@ import com.example.todolist.ui.navbar.NavBar
 import com.example.todolist.ui.navbar.NavGraph
 import com.example.todolist.ui.theme.TodoListTheme
 import com.example.todolist.viewmodel.CommonViewModel
-import com.example.todolist.viewmodel.NavBarViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import android.provider.Settings
+import androidx.compose.ui.graphics.Color
+import java.time.format.DateTimeFormatter
 
-//@AndroidEntryPoint
-//class MainActivity : ComponentActivity() {
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//
-//        // ✅ Yêu cầu quyền EXACT_ALARM nếu cần
-//        requestExactAlarmPermissionIfNeeded()
-//
-//        enableEdgeToEdge()
-//        setContent {
-//            RequestNotificationPermission() // vẫn giữ POST_NOTIFICATIONS
-//
-//            TodoListTheme {
-//                val navController = rememberNavController()
-//                val commonViewModel: CommonViewModel = hiltViewModel()
-//                val dateFormat by commonViewModel.dateFormat.collectAsStateWithLifecycle()
-//                if (dateFormat == "") {
-//                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-//                        Text("Loading...")
-//                    }
-//                } else {
-//                    NavBar(navController = navController, commonViewModel = commonViewModel) { innerPadding ->
-//                        NavGraph(
-//                            navController = navController,
-//                            commonViewModel = commonViewModel
-//                        )
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    private fun requestExactAlarmPermissionIfNeeded() {
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-//            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-//            if (!alarmManager.canScheduleExactAlarms()) {
-//                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-//                    data = Uri.parse("package:$packageName")
-//                }
-//                startActivity(intent)
-//            }
-//        }
-//    }
-//}
-//
-//@Composable
-//fun RequestNotificationPermission() {
-//    val context = LocalContext.current
-//    val activity = context as? Activity
-//
-//    LaunchedEffect(Unit) {
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-//            val permission = android.Manifest.permission.POST_NOTIFICATIONS
-//            val granted = ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
-//
-//            if (!granted && activity != null) {
-//                ActivityCompat.requestPermissions(
-//                    activity,
-//                    arrayOf(permission),
-//                    1001 // request code
-//                )
-//            }
-//        }
-//    }
-//}
-//
+
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -120,14 +56,20 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val commonViewModel: CommonViewModel = hiltViewModel()
                 val dateFormat by commonViewModel.dateFormat.collectAsStateWithLifecycle()
+                val timeFormat by commonViewModel.timeFormat.collectAsStateWithLifecycle()
+                val color by commonViewModel.color.collectAsStateWithLifecycle()
+
+                val formatterDate = DateTimeFormatter.ofPattern(dateFormat)
+                val formatterTime = DateTimeFormatter.ofPattern(timeFormat)
+                val bgColor = Color(android.graphics.Color.parseColor(color))
 
                 if (dateFormat.isBlank()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text("Loading...")
                     }
                 } else {
-                    NavBar(navController = navController, commonViewModel = commonViewModel) { innerPadding ->
-                        NavGraph(navController, commonViewModel, innerPadding)
+                    NavBar(navController = navController, commonViewModel = commonViewModel, formatterTime = formatterTime, bgColor = bgColor) { innerPadding ->
+                        NavGraph(navController, commonViewModel, formatterDate, formatterTime, bgColor, innerPadding)
                     }
                 }
             }

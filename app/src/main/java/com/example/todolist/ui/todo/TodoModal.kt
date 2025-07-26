@@ -74,7 +74,8 @@ import java.time.format.TextStyle
 @Composable
 fun TodoModal(
     viewModel: TodoModalViewModel = hiltViewModel(),
-    commonViewModel: CommonViewModel,
+    formatterTime: DateTimeFormatter,
+    color: Color,
     onDismiss: () -> Unit
 ) {
     val date by viewModel.date.collectAsStateWithLifecycle()
@@ -88,9 +89,7 @@ fun TodoModal(
     val isValid by viewModel.isValid.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val isReminderEnabled by viewModel.isReminderEnabled.collectAsStateWithLifecycle()
-    val dateFormat by commonViewModel.dateFormat.collectAsStateWithLifecycle()
-    val timeFormat by commonViewModel.timeFormat.collectAsStateWithLifecycle()
-    val color by commonViewModel.color.collectAsStateWithLifecycle()
+
 
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -149,7 +148,7 @@ fun TodoModal(
             startTime = startTime,
             endTime = endTime,
             viewModel = viewModel,
-            timeFormat = timeFormat
+            formatterTime = formatterTime,
         )
         Box(
             modifier = Modifier
@@ -294,7 +293,7 @@ fun DateTimeSection(
     startTime: LocalDateTime,
     endTime: LocalDateTime,
     viewModel: TodoModalViewModel,
-    timeFormat: String
+    formatterTime: DateTimeFormatter,
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     var showStartTimePicker by remember { mutableStateOf(false) }
@@ -315,8 +314,6 @@ fun DateTimeSection(
         initialHour = endTime.hour,
         initialMinute = endTime.minute
     )
-
-    val timeFormatter = DateTimeFormatter.ofPattern(timeFormat, Locale("vi", "VN"))
 
     Box(
         modifier = Modifier
@@ -370,7 +367,7 @@ fun DateTimeSection(
                         onClick = { showStartTimePicker = true },
                         contentPadding = PaddingValues(0.dp)
                     ) {
-                        Text(startTime.format(timeFormatter), fontSize = 16.sp)
+                        Text(startTime.format(formatterTime), fontSize = 16.sp)
                     }
                 }
 
@@ -389,7 +386,7 @@ fun DateTimeSection(
                         onClick = { showEndTimePicker = true },
                         contentPadding = PaddingValues(0.dp)
                     ) {
-                        Text(endTime.format(timeFormatter), fontSize = 16.sp)
+                        Text(endTime.format(formatterTime), fontSize = 16.sp)
                     }
                 }
             }
@@ -572,7 +569,7 @@ fun ReminderPickerSheet(
 
 @Composable
 fun ReminderSettingsBlock(
-    color: String,
+    color: Color,
     isEnabled: Boolean,
     onEnabledChange: (Boolean) -> Unit,
     reminderOffsets: List<Long>,

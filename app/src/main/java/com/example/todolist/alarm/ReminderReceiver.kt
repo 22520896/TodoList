@@ -1,6 +1,5 @@
 package com.example.todolist.alarm
 
-import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -11,9 +10,6 @@ import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
-import android.preference.PreferenceManager
-import android.util.Log
-import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.example.todolist.FocusActivity
 import com.example.todolist.MainActivity
@@ -24,29 +20,27 @@ class ReminderReceiver : BroadcastReceiver() {
     @Suppress("MissingPermission")
     override fun onReceive(context: Context, intent: Intent) {
 
-        /* ==== 1. Lấy dữ liệu ==== */
+        // 1. Lấy dữ liệu
         val todoId          = intent.getLongExtra("todoId", -1L)
         val title           = intent.getStringExtra("title") ?: "Nhắc nhở"
         val dateStr         = intent.getStringExtra("date") ?: ""
         val startTimeStr    = intent.getStringExtra("start_time") ?: ""
         val endTimeStr      = intent.getStringExtra("end_time") ?: ""
-        val focusEnabled    = intent.getBooleanExtra("isFocusEnabled", false)
+        val rawFocusFlag    = intent.getBooleanExtra("isFocusEnabled", false)
 
-        /* ==== 2. Chuông người dùng chọn ==== */
+        val focusEnabled    = rawFocusFlag && (todoId != -1L) && (!FocusSessionManager.isRunning() || FocusSessionManager.currentId() == todoId)
+
+        // 2. Chuông người dùng chọn
         val prefs       = context.getSharedPreferences("user_settings", Context.MODE_PRIVATE)
         val ringtoneUri = prefs.getString("ringtone_uri", null)?.let { Uri.parse(it) }
 
-        /* ==== 3. Intent mở Activity (Focus hoặc Main) ==== */
-        val openIntent = Intent(
-            context,
-            if (focusEnabled && todoId != -1L) FocusActivity::class.java else MainActivity::class.java
-        ).apply {
+        // 3. Intent mở Activity
+        val targetCls = if (focusEnabled) FocusActivity::class.java else MainActivity::class.java
+
+        val openIntent = Intent(context, targetCls).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("todoId", todoId)
         }
-
-        /* Nếu là Focus –> mở ngay  (Samsung 14: cho phép vì app đang nhận **alarm** cao‑độ ưu tiên) */
-        if (focusEnabled && todoId != -1L) context.startActivity(openIntent)
 
         val openPending = PendingIntent.getActivity(
             context,
@@ -55,7 +49,12 @@ class ReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        /* ==== 4. Kênh thông báo ==== */
+        if (focusEnabled) {
+            FocusSessionManager.start(todoId)
+            context.startActivity(openIntent)
+        }
+
+        // 4. Notification
         val channelId = "todo_reminder_channel"
         val nm        = context.getSystemService(NotificationManager::class.java)
 
@@ -76,7 +75,7 @@ class ReminderReceiver : BroadcastReceiver() {
 
         val bigText = "$title\n$dateStr • $startTimeStr → $endTimeStr"
 
-        /* ==== 5. Full‑screen notification để bảo đảm hiển thị khi màn hình khoá ==== */
+        // 5. Full‑screen notification
         val notif = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_calendar)
             .setContentTitle("🔔 Nhắc nhở nhiệm vụ")
@@ -84,83 +83,20 @@ class ReminderReceiver : BroadcastReceiver() {
             .setStyle(NotificationCompat.BigTextStyle().bigText(bigText))
             .setContentIntent(openPending)
             .setAutoCancel(true)
-            .setSound(null)          // tắt “beep” mặc định
+            .setSound(null)
             .setDefaults(0)
             .setPriority(NotificationCompat.PRIORITY_MAX)
-            .setFullScreenIntent(openPending, /*highPriority =*/ true)   // <-- quan trọng
+            .apply {
+                if (focusEnabled) setFullScreenIntent(openPending, true)
+            }
             .build()
 
         nm.notify(todoId.toInt(), notif)
 
-        /* ==== 6. Phát chuông người dùng chọn ==== */
+        // 6. Phát chuông người dùng chọn
         RingtoneManager.getRingtone(context, ringtoneUri)?.play()
     }
 }
-
-
-//class ReminderReceiver : BroadcastReceiver() {
-//    override fun onReceive(context: Context, intent: Intent) {
-//        val title = intent.getStringExtra("title") ?: "Nhắc nhở"
-//        val todoId = intent.getLongExtra("todoId", -1L)
-//        val dateStr = intent.getStringExtra("date") ?: ""
-//        val startTimeStr = intent.getStringExtra("start_time") ?: ""
-//        val endTimeStr = intent.getStringExtra("end_time") ?: ""
-//        val isFocusEnabled = intent.getBooleanExtra("isFocusEnabled", false)
-//
-//        val prefs = context.getSharedPreferences("user_settings", Context.MODE_PRIVATE)
-//        val ringtoneUriStr = prefs.getString("ringtone_uri", null)
-//        val ringtoneUri = ringtoneUriStr?.let { Uri.parse(it) }
-//
-//        val notificationManager =
-//            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-//        val channelId = "todo_reminder_channel"
-//
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//            val channel = NotificationChannel(
-//                channelId,
-//                "Nhắc nhở Todo",
-//                NotificationManager.IMPORTANCE_HIGH
-//            )
-//            notificationManager.createNotificationChannel(channel)
-//        }
-//
-//        val fullContent = "$title\n$dateStr | $startTimeStr → $endTimeStr"
-//
-//        val openIntent = Intent(context, if (isFocusEnabled && todoId != -1L) FocusActivity::class.java else MainActivity::class.java).apply {
-//            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-//            putExtra("todoId", todoId)
-//        }
-//
-//        // 👉 Start ngay lập tức nếu focus được bật
-//        if (isFocusEnabled && todoId != -1L) {
-//            context.startActivity(openIntent)
-//        }
-//
-//        val pendingIntent = PendingIntent.getActivity(
-//            context,
-//            todoId.toInt(),
-//            openIntent,
-//            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-//        )
-//
-//        val notification = NotificationCompat.Builder(context, channelId)
-//            .setContentTitle("🔔 Nhắc nhở nhiệm vụ")
-//            .setContentText(fullContent)
-//            .setStyle(NotificationCompat.BigTextStyle().bigText(fullContent))
-//            .setSmallIcon(R.drawable.ic_calendar)
-//            .setContentIntent(pendingIntent)
-//            .setAutoCancel(true)
-//            .setSound(null)
-//            .setDefaults(0)
-//            .build()
-//
-//        notificationManager.notify(todoId.toInt(), notification)
-//
-//        // 🔊 Phát chuông
-//        RingtoneManager.getRingtone(context, ringtoneUri)?.play()
-//    }
-//}
-
 
 class EventReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {

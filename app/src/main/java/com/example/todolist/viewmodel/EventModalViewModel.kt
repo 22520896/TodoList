@@ -27,7 +27,6 @@ class EventModalViewModel @Inject constructor(
     private val repository: EventRepository
 ) : ViewModel() {
     private val _isEditMode = MutableStateFlow(false)
-    val   isEditMode = _isEditMode.asStateFlow()
 
     private val _id = MutableStateFlow(0L)
     val   id = _id.asStateFlow()
@@ -63,7 +62,6 @@ class EventModalViewModel @Inject constructor(
     val   errorMessage = _errorMessage.asStateFlow()
 
 
-    /** Khởi tạo dialog thêm mới */
     fun startAddEvent(date: LocalDate = LocalDate.now()) {
         _isEditMode.value       = false
         _id.value               = 0L
@@ -83,7 +81,6 @@ class EventModalViewModel @Inject constructor(
         _errorMessage.value     = null
     }
 
-    /** Khởi tạo dialog chỉnh sửa */
     fun startEditEvent(event: Event) {
         _isEditMode.value       = true
         _id.value               = event.id
@@ -117,7 +114,6 @@ class EventModalViewModel @Inject constructor(
 
     fun toggleReminderEnabled()                { _isReminderEnabled.value = !_isReminderEnabled.value }
 
-    /* ---------- Persist ---------- */
     fun saveEvent(): Boolean {
         if (!validate()) return false
 
@@ -125,13 +121,13 @@ class EventModalViewModel @Inject constructor(
             val reminders = if (_isReminderEnabled.value) _reminderOffsets.value else emptyList()
 
             val event = Event(
-                id            = if (_isEditMode.value) _id.value else 0L,
-                title         = _title.value.trim(),
-                detail        = _detail.value.trim(),
-                startDate     = _startDate.value,
-                startTime     = _startTime.value,
-                endDate       = _endDate.value,
-                endTime       = _endTime.value,
+                id = if (_isEditMode.value) _id.value else 0L,
+                title = _title.value.trim(),
+                detail  = _detail.value.trim(),
+                startDate = _startDate.value,
+                startTime  = _startTime.value,
+                endDate  = _endDate.value,
+                endTime = _endTime.value,
                 reminderOffsets = reminders
             )
 

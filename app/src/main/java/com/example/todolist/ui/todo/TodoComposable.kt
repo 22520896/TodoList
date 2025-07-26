@@ -1,4 +1,4 @@
-package com.example.todolist.ui.home.todo
+package com.example.todolist.ui.todo
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -57,6 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.todolist.R
 import com.example.todolist.data.entity.Todo
 import com.example.todolist.ui.CommonTitleField
+import com.example.todolist.ui.ConfirmDeleteDialog
 import com.example.todolist.viewmodel.TodoViewModel
 import kotlinx.coroutines.launch
 import java.text.DateFormat
@@ -66,38 +67,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
-//@Composable
-//@OptIn(ExperimentalMaterial3Api::class)
-//fun TodoTopNavBar(
-//    selectedFilter: DateFilter,
-//    onFilterChange: (DateFilter) -> Unit
-//) {
-//    val items = DateFilter.values()
-//
-//    CenterAlignedTopAppBar(
-//        modifier = Modifier.padding(top = 8.dp),
-//        colors  = TopAppBarDefaults.centerAlignedTopAppBarColors(
-//            containerColor = Color.Transparent
-//        ),
-//        title = {                    // <-- truyền Row vào title
-//            SingleChoiceSegmentedButtonRow {
-//                items.forEachIndexed { idx, f ->
-//                    SegmentedButton(
-//                        selected = f == selectedFilter,
-//                        onClick  = { onFilterChange(f) },
-//                        shape    = SegmentedButtonDefaults.itemShape(idx, items.size),
-//                        colors   = SegmentedButtonDefaults.colors(
-//                            activeContainerColor   = Color(0xFFFF9800),
-//                            inactiveContainerColor = Color(0xFFF2F2F2)
-//                        )
-//                    ) {
-//                        Text(f.label, fontSize = 13.sp)
-//                    }
-//                }
-//            }
-//        }
-//    )
-//}
+// Ngày/Tuần/Tháng Filter
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun TodoTopNavBar(
@@ -164,30 +134,25 @@ fun TodoTopNavBar(
     }
 }
 
-
+//Lịch theo Ngày
 @Composable
 fun HorizontalCalendar(
-    color: String,
+    color: Color,
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val today = LocalDate.now()
 
-    // Tạo danh sách với today ở giữa
-    val allDates = rememberSaveable {
-        val beforeToday = generateSequence(today.minusDays(1)) { it.minusDays(1) }
-            .takeWhile { it >= today.minusMonths(6) }
+    val allDates = remember {
+        val start = today.minusMonths(6)
+        val end = today.plusMonths(6)
+        generateSequence(start) { it.plusDays(1) }
+            .takeWhile { it <= end }
             .toList()
-            .reversed()
-
-        val afterToday = generateSequence(today.plusDays(1)) { it.plusDays(1) }
-            .takeWhile { it <= today.plusMonths(6) }
-
-        (beforeToday + listOf(today) + afterToday).toList()
     }
 
-    // Khởi tạo scroll position ngay tại today
+    // Khởi tạo scroll position ngay tại selectedDate
     val scrollState = rememberLazyListState(
         initialFirstVisibleItemIndex = allDates.indexOf(selectedDate).coerceAtLeast(0)
     )
@@ -200,15 +165,13 @@ fun HorizontalCalendar(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
     ) {
-        items(allDates) { date ->
+        items(allDates, key = { it.toEpochDay() }) { date ->
             DayItem(
-                color = color,
+                bgColor = color,
                 date = date,
                 isSelected = date == selectedDate,
                 isToday = date == today,
-                onClick = {
-                    onDateSelected(date)
-                }
+                onClick = { onDateSelected(date) }
             )
         }
     }
@@ -217,14 +180,13 @@ fun HorizontalCalendar(
 
 @Composable
 private fun DayItem(
-    color: String,
+    bgColor: Color,
     date: LocalDate,
     isSelected: Boolean,
     isToday: Boolean,
     onClick: () -> Unit
 ) {
-    val bgColor = Color(android.graphics.Color.parseColor(color))
-    val bg   = if (isSelected) bgColor else Color.Transparent
+    val bg = if (isSelected) bgColor else Color.Transparent
     val text = if (isSelected) Color.White
     else if (isToday) bgColor else Color.Black
     val border = if (isToday && !isSelected) bgColor else Color.Gray
@@ -249,23 +211,22 @@ private fun DayItem(
     }
 }
 
+// ____________________________________________________________________________
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterialApi::class)
 @Composable
 fun TodoItemCard(
-    dateFormat: String,
-    timeFormat: String,
-    color: String,
+    formatterDate: DateTimeFormatter,
+    formatterTime: DateTimeFormatter,
+    color: Color,
     todo: Todo,
     onCheckedChange: (Boolean) -> Unit,
     onClick: () -> Unit,
     onDeleteConfirmed: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val formatterDate = DateTimeFormatter.ofPattern(dateFormat)
-    val formatterTime = DateTimeFormatter.ofPattern(timeFormat)
+
 
     val backgroundColor = if (todo.isHighPriority) Color(0xFFFFF3CD) else Color.White
-    val alpha = if (todo.isDone) 0.6f else 1f
 
     var showConfirmDialog by remember { mutableStateOf(false) }
 
@@ -299,12 +260,11 @@ fun TodoItemCard(
                     .padding(horizontal = 8.dp, vertical = 6.dp)
                     .shadow(3.dp, RoundedCornerShape(16.dp))
                     .background(backgroundColor, RoundedCornerShape(18.dp))
-                    .alpha(alpha)
                     .clickable { onClick() }
                     .padding(12.dp)
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().alpha(if (todo.isDone) 0.6f else 1f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -313,7 +273,7 @@ fun TodoItemCard(
                             Icon(
                                 imageVector = if (todo.isDone) Icons.Default.CheckCircle else Icons.Outlined.Circle,
                                 contentDescription = "Hoàn thành",
-                                tint = if (todo.isDone) Color(android.graphics.Color.parseColor(color)) else Color.Gray // Đổi màu icon thành xanh khi hoàn thành
+                                tint = if (todo.isDone) color else Color.Gray
                             )
                         }
 
@@ -373,29 +333,10 @@ fun TodoItemCard(
 
     // Dialog xác nhận xóa
     if (showConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { showConfirmDialog = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    showConfirmDialog = false
-                    onDeleteConfirmed()
-                }) { Text("OK") }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    showConfirmDialog = false
-                }) { Text("Hủy") }
-            },
-            title = {
-                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Text(
-                        "Xác nhận xóa",
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                }
-            },
-            text = { Text("Bạn có chắc chắn muốn xóa nhiệm vụ này không?") }
+        ConfirmDeleteDialog(
+            text = "nhiệm vụ",
+            onDismiss = { showConfirmDialog = false },
+            onConfirm = { onDeleteConfirmed() }
         )
     }
 }
@@ -463,7 +404,7 @@ fun OverviewCard(
 
 @Composable
 fun HorizontalWeekCalendar(
-    color: String,
+    color: Color,
     selectedDate: LocalDate,
     onWeekSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier
@@ -499,7 +440,7 @@ fun HorizontalWeekCalendar(
                 endDate = endOfWeek,
                 isSelected = isSelected,
                 isCurrent = isCurrent,
-                color = color,
+                bgColor = color,
                 onClick = { onWeekSelected(startOfWeek) }
             )
         }
@@ -512,10 +453,9 @@ fun WeekItem(
     endDate: LocalDate,
     isSelected: Boolean,
     isCurrent: Boolean,
-    color: String,
+    bgColor: Color,
     onClick: () -> Unit
 ) {
-    val bgColor = Color(android.graphics.Color.parseColor(color))
     val bg   = if (isSelected) bgColor else Color.Transparent
     val text = if (isSelected) Color.White else if (isCurrent) bgColor else Color.Black
     val border = if (isCurrent && !isSelected) bgColor else Color.Gray
@@ -554,7 +494,7 @@ fun WeekItem(
 
 @Composable
 fun HorizontalMonthCalendar(
-    color: String,
+    color: Color,
     selectedDate: LocalDate,
     onMonthSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier
@@ -590,7 +530,7 @@ fun HorizontalMonthCalendar(
                 monthDate = firstDayOfMonth,
                 isSelected = isSelected,
                 isCurrent = isCurrent,
-                color = color,
+                bgColor = color,
                 onClick = { onMonthSelected(firstDayOfMonth) }
             )
         }
@@ -603,10 +543,9 @@ fun MonthItem(
     monthDate: LocalDate,
     isSelected: Boolean,
     isCurrent: Boolean,
-    color: String,
+    bgColor: Color,
     onClick: () -> Unit
 ) {
-    val bgColor = Color(android.graphics.Color.parseColor(color))
     val bg = if (isSelected) bgColor else Color.Transparent
     val textColor = if (isSelected) Color.White else if (isCurrent) bgColor else Color.Black
     val border = if (isCurrent && !isSelected) bgColor else Color.Gray

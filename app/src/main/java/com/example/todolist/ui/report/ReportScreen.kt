@@ -16,18 +16,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.example.todolist.ui.home.todo.HorizontalMonthCalendar
+import com.example.todolist.ui.todo.HorizontalMonthCalendar
 import com.example.todolist.viewmodel.CommonViewModel
 import com.example.todolist.viewmodel.ReportViewModel
 
 @Composable
 fun ReportScreen(
     reportViewModel: ReportViewModel,
-    commonViewModel: CommonViewModel
+    color: Color,
 ) {
     val selectedDate by reportViewModel.selectedDate.collectAsStateWithLifecycle()
     val report by reportViewModel.report.collectAsStateWithLifecycle()
-    val color by commonViewModel.color.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier.padding(vertical = 4.dp),

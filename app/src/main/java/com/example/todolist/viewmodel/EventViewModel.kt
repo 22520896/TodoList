@@ -14,9 +14,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneId
 import javax.inject.Inject
 
 @HiltViewModel
@@ -27,15 +24,8 @@ class EventViewModel @Inject constructor(
     val allEvents: StateFlow<List<Event>> = repository.getAllEvents()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val _selectedDate = MutableStateFlow(LocalDate.now())
-    val selectedDate = _selectedDate.asStateFlow()
-
     fun deleteEvent(event: Event) = viewModelScope.launch {
         repository.delete(event)
-    }
-
-    fun setDate(date: LocalDate) {
-        _selectedDate.value = date
     }
 
 }

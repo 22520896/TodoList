@@ -3,7 +3,6 @@ package com.example.todolist.ui.navbar
 import com.example.todolist.R
 
 enum class NavDes(val route: String, val label: String, val icon: Int = 0) {
-//    HOME("home", "Nhiệm vụ", R.drawable.ic_home),
     CALENDAR("calendar", "Lịch", R.drawable.ic_calendar),
     ADD("add", "Thêm", R.drawable.ic_plus),
     REPORT("report", "Báo cáo", R.drawable.ic_chart),

@@ -23,19 +23,17 @@ interface TodoDao {
 
     @Delete
     suspend fun deleteTodo(todo: Todo)
-//    @Query("DELETE FROM todos WHERE id = :id")
-//    suspend fun deleteTodo(id: Long)
 
     // Lọc todo theo ngày (dựa trên trường date)
-    @Query("SELECT * FROM todos WHERE date = :date ORDER BY startTime ASC")
+    @Query("SELECT * FROM todos WHERE date = :date ORDER BY isHighPriority DESC, startTime ASC")
     fun getTodosByDate(date: LocalDate): Flow<List<Todo>>
 
     // Lọc todo theo tháng (dựa trên trường date)
-    @Query("SELECT * FROM todos WHERE strftime('%Y-%m', date) = :monthStr ORDER BY date ASC")
+    @Query("SELECT * FROM todos WHERE strftime('%Y-%m', date) = :monthStr ORDER BY isHighPriority DESC, date ASC")
     fun getTodosByMonth(monthStr: String): Flow<List<Todo>>
 
     // Lọc todo theo tuần (dựa trên trường date, tuần bắt đầu từ thứ Hai theo ISO)
-    @Query("SELECT * FROM todos WHERE strftime('%Y-%W', date) = :weekStr ORDER BY date ASC")
+    @Query("SELECT * FROM todos WHERE strftime('%Y-%W', date) = :weekStr ORDER BY isHighPriority DESC,date ASC")
     fun getTodosByWeek(weekStr: String): Flow<List<Todo>>
 
     @Query("SELECT * FROM todos WHERE strftime('%Y-%m', date) = :monthStr")

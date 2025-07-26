@@ -34,19 +34,16 @@ fun DonutChart(report: Report) {
     val total = report.total.coerceAtLeast(1) // tránh chia 0
     val completedPercent = report.completed * 100f / total
     val incompletedPercent = report.incompleted * 100f / total
-//    val notStartedPercent = report.notStarted * 100f / total
 
     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth()) {
         PieChart(
             values = listOf(
                 completedPercent,
                 incompletedPercent,
-//                notStartedPercent
             ),
             colors = listOf(
-                Color(0xFF4CAF50), // xanh
-                Color(0xFFFFC107), // vàng
-//                Color(0xFFF06292)  // hồng
+                Color(0xFF4CAF50),
+                Color(0xFFFFC107),
             ),
             size = 160.dp,
             thickness = 26.dp
@@ -66,7 +63,6 @@ fun DonutChart(report: Report) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-//        Legend("Chưa bắt đầu", Color(0xFFF06292))
         Legend("Chưa hoàn thành", Color(0xFFFFC107))
         Legend("Hoàn thành", Color(0xFF4CAF50))
 
@@ -89,10 +85,10 @@ fun Legend(label: String, color: Color) {
 
 @Composable
 fun PieChart(
-    values: List<Float>,         // phần trăm cho từng phần, tổng không cần là 100
-    colors: List<Color>,         // màu tương ứng
-    size: Dp = 200.dp,           // kích thước vòng tròn
-    thickness: Dp = 30.dp        // độ dày của donut
+    values: List<Float>,
+    colors: List<Color>,
+    size: Dp = 200.dp,
+    thickness: Dp = 30.dp
 ) {
     val proportions = values.map { it / values.sum() }
 
@@ -120,7 +116,6 @@ fun ReportCats(report: Report) {
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-//        CatStat(R.drawable.cat, report.notStarted, Color(0xFFF06292))
         CatStat(R.drawable.img3, report.incompleted, Color(0xFFFFC107))
         CatStat(R.drawable.img3, report.completed, Color(0xFF4CAF50))
     }

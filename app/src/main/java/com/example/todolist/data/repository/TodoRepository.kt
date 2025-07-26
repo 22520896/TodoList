@@ -10,36 +10,6 @@ import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
 
-// Bọc lại các phương thức của DAO và cung cấp chúng cho ViewModel
-
-//class TodoRepository @Inject constructor(private val todoDao: TodoDao, private val reportRepository: ReportRepository) {
-//    suspend fun insertTodo(todo: Todo)  {
-//        todoDao.insert(todo)
-//        reportRepository.updateReportFor(todo.date)
-//    }
-//
-//    suspend fun getTodoById(id: Long): Todo? = todoDao.getTodoById(id)
-//
-//    suspend fun updateTodo(todo: Todo)  {
-//        todoDao.update(todo)
-//        reportRepository.updateReportFor(todo.date)
-//    }
-//
-//    suspend fun deleteTodo(todo: Todo) {
-//        todoDao.deleteTodo(todo)
-//        if (todo != null) {
-//            todoDao.deleteTodo(todo)
-//            reportRepository.updateReportFor(todo.date)
-//        }
-//    }
-//
-//    fun getTodosByDate(date: LocalDate): Flow<List<Todo>> = todoDao.getTodosByDate(date)
-//
-//    fun getTodosByMonth(monthStr: String): Flow<List<Todo>> = todoDao.getTodosByMonth(monthStr)
-//
-//    fun getTodosByWeek(weekStr: String): Flow<List<Todo>> = todoDao.getTodosByWeek(weekStr)
-//}
-
 class TodoRepository @Inject constructor(
     private val todoDao: TodoDao,
     private val reportRepository: ReportRepository,

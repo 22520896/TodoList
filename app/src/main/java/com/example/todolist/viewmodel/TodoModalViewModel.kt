@@ -19,7 +19,7 @@ class TodoModalViewModel @Inject constructor(
 
     // State cho modal (thêm/chỉnh sửa)
     private val _isEditMode = MutableStateFlow(false)
-    val isEditMode = _isEditMode.asStateFlow()
+//    val isEditMode = _isEditMode.asStateFlow()
 
     private val _isReminderEnabled = MutableStateFlow(false)
     val isReminderEnabled = _isReminderEnabled
@@ -44,7 +44,6 @@ class TodoModalViewModel @Inject constructor(
     val detail = _detail.asStateFlow()
 
     private val _isDone = MutableStateFlow(false)
-    val isDone = _isDone.asStateFlow()
 
     private val _isHighPriority = MutableStateFlow(false)
     val isHighPriority = _isHighPriority.asStateFlow()
@@ -101,17 +100,14 @@ class TodoModalViewModel @Inject constructor(
 
     fun updateDate(date: LocalDate) {
         _date.value = date
-//        validateInput()
     }
 
     fun updateStartTime(startTime: LocalDateTime) {
         _startTime.value = startTime
-//        validateInput()
     }
 
     fun updateEndTime(endTime: LocalDateTime) {
         _endTime.value = endTime
-//        validateInput()
     }
 
     fun updateReminderOffsets(offsets: List<Long>) {
@@ -120,16 +116,12 @@ class TodoModalViewModel @Inject constructor(
 
     fun updateTitle(title: String) {
         _title.value = title
-//        validateInput()
     }
 
     fun updateDetail(detail: String) {
         _detail.value = detail
     }
 
-//    fun toggleIsDone() {
-//        _isDone.value = !_isDone.value
-//    }
 
     fun toggleIsHighPriority() {
         _isHighPriority.value = !_isHighPriority.value
@@ -146,7 +138,6 @@ class TodoModalViewModel @Inject constructor(
     fun clearError(){
         _errorMessage.value = null
     }
-    // Lưu todo
     fun saveTodo(): Boolean {
         if (validateInput()) {
             viewModelScope.launch {

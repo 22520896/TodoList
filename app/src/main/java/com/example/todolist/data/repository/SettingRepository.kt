@@ -8,20 +8,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-//class SettingRepository @Inject constructor(private val settingDao: SettingDao) {
-//    suspend fun insertSetting(setting: Setting) = settingDao.insertSetting(setting)
-//
-//    suspend fun updateDateFormat(format: String) = settingDao.updateDateFormat(format)
-//
-//    suspend fun updateTimeFormat(format: String) = settingDao.updateTimeFormat(format)
-//
-//    suspend fun updateColor(color: String) = settingDao.updateColor(color)
-//
-//    suspend fun updateRingtone(uri: String, name: String) = settingDao.updateRingtone(uri, name)
-//
-//    fun getSetting(): Flow<Setting> = settingDao.getSetting()
-//}
-
 class SettingRepository @Inject constructor(
     private val settingDao: SettingDao,
     @ApplicationContext private val context: Context

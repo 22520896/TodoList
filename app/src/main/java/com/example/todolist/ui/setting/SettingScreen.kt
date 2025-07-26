@@ -95,15 +95,7 @@ fun SettingScreen(
                 .padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
         )
 
-//        // Ảnh
-//        Image(
-//            painter = painterResource(id = R.drawable.cat),
-//            contentDescription = null,
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .height(160.dp),
-//            contentScale = ContentScale.Crop
-//        )
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -113,7 +105,7 @@ fun SettingScreen(
                 .padding(horizontal = 10.dp, vertical = 4.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.cat), // thay bằng ảnh bạn cung cấp
+                painter = painterResource(id = R.drawable.cat),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(24.dp))
@@ -130,16 +122,16 @@ fun SettingScreen(
         // Danh sách cài đặt
         Box(
             modifier = Modifier
-                .wrapContentSize() // Chiếm đúng kích cỡ nội dung
+                .wrapContentSize()
                 .padding(horizontal = 10.dp, vertical = 6.dp)
                 .fillMaxWidth()
-                .shadow(3.dp, RoundedCornerShape(18.dp)) // Bóng nhẹ giống TodoItemCard
-                .background(Color.White, RoundedCornerShape(16.dp)) // Nền trắng
+                .shadow(3.dp, RoundedCornerShape(18.dp))
+                .background(Color.White, RoundedCornerShape(16.dp))
                 .padding(6.dp)
         ){
             Column(
-                modifier = Modifier.fillMaxWidth(), // Column chiếm toàn chiều rộng để căn chỉnh
-                verticalArrangement = Arrangement.spacedBy(2.dp) // Khoảng cách giữa các mục
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                     SettingItem(
                         icon = Icons.Default.CalendarMonth,

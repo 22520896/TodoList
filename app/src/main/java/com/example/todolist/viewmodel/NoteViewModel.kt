@@ -72,13 +72,13 @@ class NoteViewModel @Inject constructor(
             } else {
                 repository.insert(note)
             }
-//            resetState()
+            resetState()
         }
     }
 
     fun delete(note: Note) = viewModelScope.launch {
         repository.delete(note)
-//        resetState()
+        resetState()
     }
 
     fun updateNote(note: Note){

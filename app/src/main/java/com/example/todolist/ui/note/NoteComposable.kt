@@ -1,4 +1,4 @@
-package com.example.todolist.ui.home.note
+package com.example.todolist.ui.note
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -53,6 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.todolist.data.entity.Note
+import com.example.todolist.ui.ConfirmDeleteDialog
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -65,15 +66,14 @@ fun NoteCardPreview(
     title: String,
     description: String,
     time: LocalDate,
-    dateFormat: String,
-    color: String,
+    formatterDate: DateTimeFormatter,
+    color: Color,
     isFavourite: Boolean,
     onFavouriteChange: (Boolean) -> Unit,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val formatter = DateTimeFormatter.ofPattern(dateFormat)
-    val formattedDate = time.format(formatter)
+    val formattedDate = time.format(formatterDate)
 
     Box(
         modifier = modifier
@@ -97,7 +97,7 @@ fun NoteCardPreview(
                     Icon(
                         imageVector = if (isFavourite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                         contentDescription = "Yêu thích",
-                        tint = if (isFavourite) Color(android.graphics.Color.parseColor(color)) else Color.Gray
+                        tint = if (isFavourite) color else Color.Gray
                     )
                 }
                 Spacer(modifier = Modifier.width(6.dp))
@@ -129,8 +129,8 @@ fun NoteCardPreview(
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun NoteItemWithSwipe(
-    dateFormat: String,
-    color: String,
+    formatterDate: DateTimeFormatter,
+    color: Color,
     note: Note,
     onDelete: () -> Unit,
     onClick: () -> Unit,
@@ -166,7 +166,7 @@ fun NoteItemWithSwipe(
                 title = note.title,
                 description = note.content,
                 time = note.updatedAt,
-                dateFormat = dateFormat,
+                formatterDate = formatterDate,
                 color = color,
                 isFavourite = note.isFavourite,
                 onFavouriteChange = onFavouriteChange,
@@ -177,29 +177,10 @@ fun NoteItemWithSwipe(
 
     // Dialog xác nhận xóa
     if (showConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { showConfirmDialog = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    showConfirmDialog = false
-                    onDelete()
-                }) { Text("OK") }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    showConfirmDialog = false
-                }) { Text("Hủy") }
-            },
-            title = {
-                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Text(
-                        "Xác nhận xóa",
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                }
-            },
-            text = { Text("Bạn có chắc chắn muốn xóa ghi chú này không?") }
+        ConfirmDeleteDialog(
+            text = "ghi chú",
+            onDismiss = { showConfirmDialog = false },
+            onConfirm = { onDelete() }
         )
     }
 }

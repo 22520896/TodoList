@@ -1,4 +1,4 @@
-package com.example.todolist.ui.home.note
+package com.example.todolist.ui.note
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
@@ -23,45 +23,23 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.todolist.viewmodel.CommonViewModel
+import java.time.format.DateTimeFormatter
 
 
-//@Composable
-//fun NoteEditScreen(navController: NavController, viewModel: NoteViewModel, id: Long){
-//    Text("Edit")
-//}
-
-
-//Danh sách các icon ở thanh Bar
-enum class NoteIcon { Bold, Image, Bullet, Color, Highlight}
-
-// Dữ liệu cho từng icon
-data class NoteIconItem(val type: NoteIcon, val icon: ImageVector, val description: String)
-
-// Danh sách các icon
-val noteIcons: List<NoteIconItem>
-    get() = listOf(
-        NoteIconItem(NoteIcon.Bold, Icons.Default.FormatBold, "Bold"),
-        NoteIconItem(NoteIcon.Image, Icons.Default.Image, "Image"),
-        NoteIconItem(NoteIcon.Bullet, Icons.Default.FormatListBulleted, "Bullet"),
-        NoteIconItem(NoteIcon.Color, Icons.Default.ColorLens, "Color"),
-        NoteIconItem(NoteIcon.Highlight, Icons.Default.Highlight, "Highlight"),
-    )
 
 @Composable
 fun NoteEditScreen(
     navController: NavController,
     viewModel: NoteViewModel,
-    commonViewModel: CommonViewModel,
     noteId: Long?,
+    color: Color,
     modifier: Modifier
 ) {
-    val color by commonViewModel.color.collectAsStateWithLifecycle()
     val notes by viewModel.allNotes.collectAsState(initial = emptyList())
     val noteToEdit = notes.find { it.id == noteId }
 
     val title by viewModel.title.collectAsState()
     val content by viewModel.content.collectAsState()
-    var selectedIcon by remember { mutableStateOf<NoteIcon?>(null) }
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(noteToEdit) {
@@ -75,7 +53,7 @@ fun NoteEditScreen(
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(android.graphics.Color.parseColor(color))).then(modifier),
+            .background(color).then(modifier),
         containerColor = Color.Transparent,
         topBar = {
             NoteEditTopBar(
@@ -101,12 +79,8 @@ fun NoteEditScreen(
                 .imePadding(),
             title = title,
             content = content,
-            selectedIcon = selectedIcon,
             onTitleChange = viewModel::updateTitle,
             onContentChange = viewModel::updateContent,
-            onIconClick = {
-                selectedIcon = if (selectedIcon == it) null else it
-            }
         )
     }
 
@@ -154,10 +128,8 @@ fun NoteEditContent(
     modifier: Modifier = Modifier,
     title: String,
     content: String,
-    selectedIcon: NoteIcon?,
     onTitleChange: (String) -> Unit,
     onContentChange: (String) -> Unit,
-    onIconClick: (NoteIcon) -> Unit
 ) {
     Column(modifier = modifier) {
         NoteTitleField(title, onTitleChange)
@@ -167,7 +139,6 @@ fun NoteEditContent(
             onChange = onContentChange,
             modifier = Modifier.weight(1f)
         )
-//        NoteToolbar(selectedIcon, onIconClick)
     }
 }
 
@@ -225,29 +196,3 @@ fun NoteContentField(
     )
 }
 
-@Composable
-fun NoteToolbar(
-    selectedIcon: NoteIcon?,
-    onIconClick: (NoteIcon) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(3.dp, RoundedCornerShape(18.dp)) // Bóng nhẹ giống TodoItemCard
-            .background(Color.White, RoundedCornerShape(16.dp)) // Nền trắng
-            .padding(8.dp), // Thêm padding để nội dung không sát mép
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        noteIcons.forEach { item ->
-            IconButton(
-                onClick = { onIconClick(item.type) },
-                colors = IconButtonDefaults.iconButtonColors(
-                    contentColor = if (selectedIcon == item.type)
-                        Color(0xFF388E3C) else LocalContentColor.current
-                )
-            ) {
-                Icon(item.icon, item.description)
-            }
-        }
-    }
-}

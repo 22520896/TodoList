@@ -32,26 +32,26 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.todolist.ui.ChooseAdd
 import com.example.todolist.ui.event.EventModal
 import com.example.todolist.ui.todo.TodoModal
 import com.example.todolist.ui.todo.TodoModalViewModel
 import com.example.todolist.viewmodel.CommonViewModel
 import com.example.todolist.viewmodel.EventModalViewModel
-import com.example.todolist.viewmodel.NavBarViewModel
 import kotlinx.coroutines.launch
+import java.time.format.DateTimeFormatter
+
 
 @SuppressLint("StateFlowValueCalledInComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NavBar(
     navController: NavController,
-    viewModel: NavBarViewModel = hiltViewModel(),
     commonViewModel: CommonViewModel,
+    formatterTime: DateTimeFormatter,
+    bgColor: Color,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val leftItems = listOf(NavDes.TODO, NavDes.CALENDAR)
@@ -60,37 +60,12 @@ fun NavBar(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
-    var currentModal by remember { mutableStateOf<NavBarViewModel.UiEvent?>(null) }
+    var currentModal by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val todoModalViewModel: TodoModalViewModel = hiltViewModel()
     val eventModalViewModel: EventModalViewModel = hiltViewModel()
-    val color by commonViewModel.color.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
-        viewModel.event.collect { e ->
-            when (e) {
-                is NavBarViewModel.UiEvent.NavigateToNewNote -> {
-                    navController.navigate(NavDes.NOTE_EDIT.route)
-                    {
-//                        popUpTo(navController.graph.findStartDestination().id) {
-//                            saveState = true
-//                        }
-//                        launchSingleTop = true
-//                        restoreState = true
-                        popUpTo(NavDes.NOTE.route) { inclusive = false }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
-
-                else -> {
-                    currentModal = e
-                    scope.launch { sheetState.show() }
-                }
-            }
-        }
-    }
 
     if (currentModal != null) {
         ModalBottomSheet(
@@ -101,34 +76,58 @@ fun NavBar(
                 }
             },
             sheetState = sheetState,
-            dragHandle       = {}
+            dragHandle = {}
         ) {
             when (currentModal) {
-                NavBarViewModel.UiEvent.ShowAddTodoModal  -> {
+                "add_todo" -> {
                     todoModalViewModel.startAddTodo(commonViewModel.initDate.value)
-                    TodoModal(viewModel = todoModalViewModel, commonViewModel = commonViewModel, onDismiss = { currentModal = null })
+                    TodoModal(viewModel = todoModalViewModel, formatterTime = formatterTime, color = bgColor, onDismiss = { currentModal = null })
                 }
-                NavBarViewModel.UiEvent.ShowAddEventModal -> {
+                "add_event" -> {
                     eventModalViewModel.startAddEvent()
-                    EventModal(eventModalViewModel, commonViewModel, { currentModal = null })
+                    EventModal(eventModalViewModel, formatterTime = formatterTime, color = bgColor, { currentModal = null })
                 }
-                NavBarViewModel.UiEvent.ShowChooseModal   -> {
-                    todoModalViewModel.startAddTodo(commonViewModel.initDate.value)
-                    TodoModal(viewModel = todoModalViewModel, commonViewModel = commonViewModel, onDismiss = { currentModal = null })
-                }
-                else -> {}    // NavigateToNewNote không rơi vào đây
+                else -> {}
             }
         }
     }
 
-    val bgColor = Color(android.graphics.Color.parseColor(color))
     Scaffold(
         Modifier.safeDrawingPadding(),
         floatingActionButtonPosition = FabPosition.Center,
         isFloatingActionButtonDocked = true,
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { viewModel.onFabClick(currentRoute) },
+                onClick = {
+                    when (currentRoute) {
+                        NavDes.NOTE.route -> {
+                            navController.navigate(NavDes.NOTE_EDIT.route) {
+                                popUpTo(NavDes.NOTE.route) { inclusive = false }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                        NavDes.TODO.route -> {
+                            currentModal = "add_todo"
+                            scope.launch { sheetState.show() }
+                        }
+
+                        NavDes.CALENDAR.route -> {
+                            currentModal = "add_event"
+                            scope.launch { sheetState.show() }
+                        }
+
+                        NavDes.REPORT.route -> {
+                            currentModal = "add_todo"
+                            scope.launch { sheetState.show() }
+                        }
+
+                        NavDes.SETTING.route -> {
+                            currentModal = "add_todo"
+                            scope.launch { sheetState.show() }
+                        }
+                    }
+                },
                 backgroundColor = bgColor,
                 contentColor = Color.White,
                 shape = CircleShape,
@@ -138,7 +137,7 @@ fun NavBar(
                     pressedElevation = 0.dp
                 ),
             )
-                {
+            {
                 Icon(
                     painter = painterResource(id = NavDes.ADD.icon),
                     contentDescription = NavDes.ADD.label,
@@ -207,6 +206,3 @@ fun NavBar(
         content = content
     )
 }
-
-
-

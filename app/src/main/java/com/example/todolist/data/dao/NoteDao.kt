@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NoteDao {
-    @Query("""SELECT * FROM notes ORDER BY updatedAt DESC"""
+    @Query("""SELECT * FROM notes ORDER BY isFavourite DESC, updatedAt DESC"""
     )
     fun getAllNotes(): Flow<List<Note>>
 

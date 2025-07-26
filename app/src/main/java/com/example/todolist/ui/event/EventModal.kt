@@ -1,7 +1,6 @@
 package com.example.todolist.ui.event
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,14 +12,12 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -28,7 +25,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.todolist.ui.CommonTitleField
 import com.example.todolist.ui.todo.ReminderSettingsBlock
 import com.example.todolist.ui.todo.TextFieldsCard
-import com.example.todolist.viewmodel.CommonViewModel
 import com.example.todolist.viewmodel.EventModalViewModel
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -44,7 +40,8 @@ import java.util.*
 @Composable
 fun EventModal(
     viewModel: EventModalViewModel = hiltViewModel(),
-    commonViewModel: CommonViewModel,
+    formatterTime: DateTimeFormatter,
+    color: Color,
     onDismiss: () -> Unit
 ) {
     val title by viewModel.title.collectAsStateWithLifecycle()
@@ -57,8 +54,7 @@ fun EventModal(
     val isReminderEnabled by viewModel.isReminderEnabled.collectAsStateWithLifecycle()
     val isValid by viewModel.isValid.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
-    val timeFormat by commonViewModel.timeFormat.collectAsStateWithLifecycle()
-    val color by commonViewModel.color.collectAsStateWithLifecycle()
+
 
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -112,7 +108,7 @@ fun EventModal(
             startTime = startTime,
             endTime = endTime,
             viewModel = viewModel,
-            timeFormat = timeFormat
+            formatterTime = formatterTime,
         )
         Box(
             modifier = Modifier
@@ -156,7 +152,7 @@ fun DateTimeSection(
     startTime: LocalDateTime,
     endTime: LocalDateTime,
     viewModel: EventModalViewModel,
-    timeFormat: String
+    formatterTime: DateTimeFormatter,
 ) {
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
@@ -186,7 +182,6 @@ fun DateTimeSection(
         initialMinute = endTime.minute
     )
 
-    val timeFormatter = DateTimeFormatter.ofPattern(timeFormat, Locale("vi", "VN"))
 
     Box(
         modifier = Modifier
@@ -234,7 +229,7 @@ fun DateTimeSection(
                         onClick = { showStartTimePicker = true },
                         contentPadding = PaddingValues(0.dp)
                     ) {
-                        Text(startTime.format(timeFormatter), fontSize = 16.sp)
+                        Text(startTime.format(formatterTime), fontSize = 16.sp)
                     }
                 }
                 Box(
@@ -266,7 +261,7 @@ fun DateTimeSection(
                         onClick = { showEndTimePicker = true },
                         contentPadding = PaddingValues(0.dp),
                     ) {
-                        Text(endTime.format(timeFormatter), fontSize = 16.sp)
+                        Text(endTime.format(formatterTime), fontSize = 16.sp)
                     }
                 }
             }
