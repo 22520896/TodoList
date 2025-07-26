@@ -32,50 +32,50 @@ A personal task management application built with **Kotlin**, using **Jetpack Co
 <table style="width: 100%; border-collapse: collapse; text-align: center;">
   <thead>
     <tr>
-      <th>Screen</th>
-      <th>Preview</th>
+      <th style="text-align: center;">Screen</th>
+      <th style="text-align: center;">Preview</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>Todo</td>
-      <td><img src="assets/todo.jpg" width="250"/></td>
+      <td style="text-align: center; vertical-align: middle;">Todo</td>
+      <td style="text-align: center; vertical-align: middle;"><img src="assets/todo.jpg" width="250"/></td>
     </tr>
     <tr>
-      <td>Add/Edit Todo</td>
-      <td><img src="assets/addTodo.jpg" width="250"/></td>
+      <td style="text-align: center; vertical-align: middle;">Add/Edit Todo</td>
+      <td style="text-align: center; vertical-align: middle;"><img src="assets/addTodo.jpg" width="250"/></td>
     </tr>
     <tr>
-      <td>Calendar</td>
-      <td><img src="assets/event.jpg" width="250"/></td>
+      <td style="text-align: center; vertical-align: middle;">Calendar</td>
+      <td style="text-align: center; vertical-align: middle;"><img src="assets/event.jpg" width="250"/></td>
     </tr>
     <tr>
-      <td>Add/Edit Event</td>
-      <td><img src="assets/addEvent.jpg" width="250"/></td>
+      <td style="text-align: center; vertical-align: middle;">Add/Edit Event</td>
+      <td style="text-align: center; vertical-align: middle;"><img src="assets/addEvent.jpg" width="250"/></td>
     </tr>
     <tr>
-      <td>Note</td>
-      <td><img src="assets/note.jpg" width="250"/></td>
+      <td style="text-align: center; vertical-align: middle;">Note</td>
+      <td style="text-align: center; vertical-align: middle;"><img src="assets/note.jpg" width="250"/></td>
     </tr>
     <tr>
-      <td>Add/Edit Note</td>
-      <td><img src="assets/addNote.jpg" width="250"/></td>
+      <td style="text-align: center; vertical-align: middle;">Add/Edit Note</td>
+      <td style="text-align: center; vertical-align: middle;"><img src="assets/addNote.jpg" width="250"/></td>
     </tr>
     <tr>
-      <td>Report</td>
-      <td><img src="assets/report.jpg" width="250"/></td>
+      <td style="text-align: center; vertical-align: middle;">Report</td>
+      <td style="text-align: center; vertical-align: middle;"><img src="assets/report.jpg" width="250"/></td>
     </tr>
     <tr>
-      <td>Setting</td>
-      <td><img src="assets/setting.jpg" width="250"/></td>
+      <td style="text-align: center; vertical-align: middle;">Setting</td>
+      <td style="text-align: center; vertical-align: middle;"><img src="assets/setting.jpg" width="250"/></td>
     </tr>  
     <tr>
-      <td>Focus Mode</td>
-      <td><img src="assets/focus.jpg" width="250"/></td>
+      <td style="text-align: center; vertical-align: middle;">Focus Mode</td>
+      <td style="text-align: center; vertical-align: middle;"><img src="assets/focus.jpg" width="250"/></td>
     </tr>  
-    
   </tbody>
 </table>
+
 </div>
 
 ---
